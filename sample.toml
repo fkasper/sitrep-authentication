@@ -1,0 +1,30 @@
+[meta]
+  dir = "/Users/f/.bio"
+  hostname = "localhost"
+  bind-address = ":7727"
+  logging-enabled = true
+  mongo-url = "mongodb://127.0.0.1:27017/bio"
+  mongo-db-name = "bio"
+  elastic-search-url = "http://localhost:9200"
+  influx-database = "bio"
+  influx-hostname = "http://127.0.0.1:8086"
+  influx-username = "test"
+  influx-password = "test"
+
+[http]
+  enabled = true
+  bind-address = ":7717"
+  auth-enabled = false
+  log-enabled = true
+  write-tracing = false
+  pprof-enabled = false
+
+[mongo]
+  enabled = false
+  peers = ["127.0.0.1:27017"]
+
+[database]
+  cassandra-keyspace = "bio"
+  cassandra-num-connections = 5
+  cassandra-peers = ["127.0.0.1"]
+
