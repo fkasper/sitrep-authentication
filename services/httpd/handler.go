@@ -248,12 +248,12 @@ func (h *Handler) serveAppCache(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("content-type", "text/cache-manifest")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`CACHE MANIFEST
-# ef14122730dc075fa895
+# `+h.Version+`
 
-/profiles/biography/manifest.json
-/profiles/biography/serviceworker.js
-/profiles/biography/bundle.js
-/profiles/biography/main.css
+/profiles/biography/` + h.Version + `.json
+/profiles/biography/serviceworker/` + h.Version + `.js
+/profiles/biography/` + h.Version + `.js
+/profiles/biography/` + h.Version + `.css
 /profiles/biography
 
 NETWORK:
