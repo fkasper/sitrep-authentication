@@ -25,9 +25,11 @@ type Service struct {
 	appName  string
 	port     int
 	err      chan error
+	exit     chan int
 	instance fargo.Instance
 	eureka   fargo.EurekaConnection
 	Logger   *log.Logger
+	ticker   *time.Ticker
 	//statMap *expvar.Map
 }
 
@@ -39,24 +41,30 @@ func NewService(host string, port int, c Config) *Service {
 	//tags := map[string]string{"bind": c.BindAddress}
 	//statMap := influxdb.NewStatistics(key, "httpd", tags)
 	strPort := strconv.Itoa(port)
-
+	ipAddr := GetLocalIP()
+	ticker := time.NewTicker(time.Second * 10)
+	hname, err := os.Hostname()
+	if err != nil {
+		panic(err)
+	}
 	s := &Service{
-		host:    host,
+		host:    hname,
 		port:    port,
+		ticker:  ticker,
 		config:  c.ConfigPath,
 		appName: c.AppName,
 		vip:     c.VipAddress,
 		err:     make(chan error),
 		Logger:  log.New(os.Stderr, "[eureka] ", log.LstdFlags),
 		instance: fargo.Instance{
-			HostName:       host,
+			HostName:       hname,
 			Port:           port,
 			App:            c.AppName,
-			IPAddr:         host,
+			IPAddr:         ipAddr,
 			VipAddress:     c.VipAddress,
-			HomePageUrl:    "http://" + host + ":" + strPort + "/",
-			StatusPageUrl:  "http://" + host + ":" + strPort + "/status",
-			HealthCheckUrl: "http://" + host + ":" + strPort + "/healthcheck",
+			HomePageUrl:    "http://" + ipAddr + ":" + strPort + "/",
+			StatusPageUrl:  "http://" + ipAddr + ":" + strPort + "/status",
+			HealthCheckUrl: "http://" + ipAddr + ":" + strPort + "/healthcheck",
 			DataCenterInfo: fargo.DataCenterInfo{Name: fargo.MyOwn},
 			Status:         fargo.UP,
 		},
@@ -70,7 +78,7 @@ func (s *Service) Open() error {
 	e, err := fargo.NewConnFromConfigFile(s.config)
 	if err != nil {
 		s.err <- err
-		return err
+		return nil
 	}
 	s.eureka = e
 	s.Logger.Println("Starting EUREKA discovery")
@@ -86,12 +94,11 @@ func (s *Service) Open() error {
 			s.err <- err
 		}
 
-		for {
+		for _ = range s.ticker.C {
 			err := s.eureka.HeartBeatInstance(&s.instance)
 			if err != nil {
 				s.err <- err
 			}
-			time.Sleep(10 * time.Second)
 		}
 	}()
 	return nil
@@ -99,12 +106,28 @@ func (s *Service) Open() error {
 
 // Close closes the underlying listener.
 func (s *Service) Close() error {
-
+	s.ticker.Stop()
 	err := s.eureka.DeregisterInstance(&s.instance)
 	if err != nil {
 		s.err <- err
 	}
 	return nil
+}
+
+func GetLocalIP() string {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return ""
+	}
+	for _, address := range addrs {
+		// check the address type and if it is not a loopback the display it
+		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				return ipnet.IP.String()
+			}
+		}
+	}
+	return ""
 }
 
 // SetLogger sets the internal logger to the logger passed in.

@@ -13,16 +13,16 @@ import (
 
 	"github.com/vatcinc/bio/database"
 	"github.com/vatcinc/bio/meta"
+	"github.com/vatcinc/bio/services/eureka"
 	"github.com/vatcinc/bio/services/httpd"
 	"github.com/vatcinc/bio/services/mongo"
-	"github.com/vatcinc/bio/services/eureka"
 )
 
 // Config represents the configuration format for the bio binary.
 type Config struct {
 	Meta     *meta.Config     `toml:"meta"`
 	HTTPD    httpd.Config     `toml:"http"`
-	eureka   eureka.Config    `toml:"eureka"`
+	Eureka   eureka.Config    `toml:"eureka"`
 	Mongo    mongo.Config     `toml:"mongo"`
 	Database *database.Config `toml:"database"`
 }
@@ -32,7 +32,7 @@ func NewConfig() *Config {
 	c := &Config{}
 	c.Meta = meta.NewConfig()
 	c.HTTPD = httpd.NewConfig()
-	c.eureka = eureka.NewConfig()
+	c.Eureka = eureka.NewConfig()
 	c.Mongo = mongo.NewConfig()
 	c.Database = database.NewConfig()
 	return c

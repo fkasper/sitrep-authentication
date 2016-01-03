@@ -1,0 +1,5 @@
+[Eureka]
+ServiceUrls = http://eureka-1.c.vatcinc-sitrep.internal:8080/eureka/v2
+ServiceUrls = http://eureka-2.c.vatcinc-sitrep.internal:8080/eureka/v2
+ServiceUrls = http://eureka-3.c.vatcinc-sitrep.internal:8080/eureka/v2
+ConnectTimeoutSeconds = 2

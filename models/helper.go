@@ -5,6 +5,8 @@ import (
 	"math/rand"
 	"time"
 
+	"gopkg.in/mgo.v2"
+
 	"github.com/gocql/gocql"
 	"github.com/relops/cqlc/cqlc"
 )
@@ -63,4 +65,8 @@ func WithSession(cassandra *gocql.ClusterConfig) (*gocql.Session, *cqlc.Context,
 	ctx := cqlc.NewContext()
 	session, err := cassandra.CreateSession()
 	return session, ctx, err
+}
+
+func PrepareQuery(sess *mgo.Database, column string) *mgo.Collection {
+	return sess.C(column)
 }

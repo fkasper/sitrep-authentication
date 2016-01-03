@@ -2,6 +2,7 @@ package httpd
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/pprof"
@@ -74,80 +75,72 @@ func NewHandler(requireAuthentication, loggingEnabled, writeTrace bool) *Handler
 
 	h.SetRoutes([]route{
 		route{
-			"token_req",
-			"POST", "/api/v1.1/token", true, true, h.authUser,
-		},
-		//DOCS
-		route{
-			"import_document",
-			"PUT", "/api/v1.1/doc_import", true, true, h.wixImport,
+			"index_bios",
+			"GET", "/profiles/api/bios", true, true, h.indexBiographies,
 		},
 		route{
-			"get_document",
-			"GET", "/api/v1.1/document", true, true, h.getDocument,
+			"create_biography",
+			"POST", "/profiles/api/bios", true, true, h.createBiography,
 		},
 		route{
-			"get_documents",
-			"GET", "/api/v1.1/documents", true, true, h.getDocuments,
+			"create_biography_opts",
+			"OPTIONS", "/profiles/api/bios", true, true, h.serveOptions,
 		},
 		route{
-			"upsert_document",
-			"PUT", "/api/v1.1/documents", true, true, h.upsertDocument,
-		},
-		// Org
-		route{
-			"upsert_org_post",
-			"POST", "/api/v1.1/organizations", true, true, h.insertCustomer,
+			"update_biography_opts",
+			"OPTIONS", "/profiles/api/bio", true, true, h.serveOptions,
 		},
 		route{
-			"upsert_org_put",
-			"PATCH", "/api/v1.1/organizations/:id", true, true, h.updateCustomer,
+			"show_bio",
+			"GET", "/profiles/api/bio", true, true, h.showBiography,
 		},
 		route{
-			"get_customer",
-			"GET", "/api/v1.1/organizations/:id", true, true, h.getCustomer,
+			"show_bio",
+			"DELETE", "/profiles/api/bio", true, true, h.deleteBiography,
 		},
 		route{
-			"search_for",
-			"GET", "/api/v1.1/organizations", true, true, h.searchCustomers,
+			"update_bio",
+			"PUT", "/profiles/api/bio", true, true, h.updateBiography,
 		},
 		route{
-			"search_customer_domains",
-			"GET", "/api/v1.1/domains", true, true, h.getCustomerDomains,
-		},
-		// Domain
-		route{
-			"insert_domain",
-			"POST", "/api/v1.1/realdomains", true, true, h.insertDomain,
+			"manifest_appcache",
+			"GET", "/profiles/biography/:manifest.appcache", true, true, h.serveAppCache,
 		},
 		route{
-			"update_domain",
-			"PATCH", "/api/v1.1/realdomains/:id", true, true, h.updateDomain,
+			"manifest_json",
+			"GET", "/profiles/biography/:manifest.json", true, true, h.serveAppJson,
 		},
 		route{
-			"get_domain",
-			"GET", "/api/v1.1/realdomains/:id", true, true, h.getDomain,
+			"serviceworker_js",
+			"GET", "/profiles/biography/serviceworker/:version.js", true, true, h.serveServiceWorker,
 		},
 		route{
-			"search_domains",
-			"GET", "/api/v1.1/realdomains", true, true, h.searchDomains,
-		},
-		// Widgets
-		route{
-			"fetch_widgets",
-			"GET", "/api/v1.1/widgets", true, true, h.serveWidgetsList,
+			"js",
+			"GET", "/profiles/biography/:version.js", true, true, h.serveBundleJs,
 		},
 		route{
-			"add_widgets_route",
-			"PUT", "/api/v1.1/widgets", true, true, h.upsertWidget,
+			"css",
+			"GET", "/profiles/biography/:version.css", true, true, h.serveMainCss,
 		},
 		route{
-			"remove_widget",
-			"DELETE", "/api/v1.1/widgets", true, true, h.deleteWidget,
+			"biography",
+			"GET", "/profiles/biography", true, true, h.serveBiographyResult,
 		},
 		route{
-			"query", // Query serving route.
-			"GET", "/api/v1.1", true, true, h.serveRoot,
+			"biography",
+			"GET", "/profiles/biography/:name", true, true, h.serveBiographyResult,
+		},
+		route{
+			"biography",
+			"GET", "/profiles/biography/:name/:action", true, true, h.serveBiographyResult,
+		},
+		route{
+			"healthcheck",
+			"GET", "/healthcheck", true, true, h.serveHealthcheck,
+		},
+		route{
+			"status", // Query serving route.
+			"GET", "/status", true, true, h.serveHealthcheck,
 		},
 	})
 
@@ -188,7 +181,7 @@ func (h *Handler) SetRoutes(routes []route) {
 		var handler http.Handler
 
 		// If it's a handler func that requires a domain, wrap it in a domain :lol:
-		if hf, ok := r.handlerFunc.(func(http.ResponseWriter, *http.Request, *bio.Domains)); ok {
+		if hf, ok := r.handlerFunc.(func(http.ResponseWriter, *http.Request, *models.Domain)); ok {
 			handler = materializeDomain(hf, h)
 		}
 
@@ -221,6 +214,63 @@ func (h *Handler) SetRoutes(routes []route) {
 func (h *Handler) serveOptions(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
+func (h *Handler) serveServiceWorker(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("content-type", "application/javascript")
+	w.WriteHeader(http.StatusOK)
+	dat, err := ioutil.ReadFile("build/serviceworker.js")
+	if err != nil {
+		httpError(w, "No id given", false, http.StatusNotFound)
+		return
+	}
+	w.Write(dat)
+}
+func (h *Handler) serveBundleJs(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("content-type", "application/javascript")
+	w.WriteHeader(http.StatusOK)
+	dat, err := ioutil.ReadFile("build/assets/javascript/bundle.js")
+	if err != nil {
+		httpError(w, err.Error(), false, http.StatusNotFound)
+		return
+	}
+	w.Write(dat)
+}
+func (h *Handler) serveMainCss(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("content-type", "text/css")
+	w.WriteHeader(http.StatusOK)
+	dat, err := ioutil.ReadFile("build/assets/css/main.css")
+	if err != nil {
+		httpError(w, err.Error(), false, http.StatusNotFound)
+		return
+	}
+	w.Write(dat)
+}
+func (h *Handler) serveAppCache(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("content-type", "text/cache-manifest")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`CACHE MANIFEST
+# ef14122730dc075fa895
+
+/profiles/biography/manifest.json
+/profiles/biography/serviceworker.js
+/profiles/biography/bundle.js
+/profiles/biography/main.css
+/profiles/biography
+
+NETWORK:
+*
+  `))
+}
+func (h *Handler) serveAppJson(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{
+    "name": "SITREP Profiles",
+    "start_url": "/profiles/biography",
+    "display": "standalone",
+    "orientation": "portrait",
+    "background_color": "#FFFFFF"
+  }`))
+}
 
 // RootAPIResult describes the API Result of the Root Document
 type RootAPIResult struct {
@@ -229,17 +279,10 @@ type RootAPIResult struct {
 	AllowedPaths []map[string]interface{} `json:"paths"`
 }
 
-func (h *Handler) serveRoot(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) serveHealthcheck(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("content-type", "application/json")
 
-	res := &RootAPIResult{
-		AppName: "bio Web Services",
-		Version: h.Version,
-		AllowedPaths: []map[string]interface{}{
-			{"path": "/", "info": "Global API Information", "methods": "GET,OPTIONS"},
-			{"path": "/health", "info": "API Health Information", "methods": "GET,OPTIONS"},
-		},
-	}
+	res := map[string]string{"status": "ok"}
 	w.Write(MarshalJSON(res, false))
 }
 

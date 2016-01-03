@@ -3,14 +3,14 @@
   hostname = "0.0.0.0"
   bind-address = ":7717"
   logging-enabled = true
-  mongo-url = "mongodb://database-1.c.vatcinc-sitrep.internal:27017/sitrep"
+  mongo-url = "mongodb://127.0.0.1:27017/sitrep"
   mongo-user = "sitrep"
   mongo-pass = "L5I44dWm"
-  mongo-enable-auth = true
+  mongo-enable-auth = false
   mongo-db-name = "sitrep"
-  elastic-search-url = "http://database-1.c.vatcinc-sitrep.internal:9200"
+  elastic-search-url = "http://127.0.0.1:9200"
   influx-database = "bio"
-  influx-hostname = "http://database-1.c.vatcinc-sitrep.internal:8086"
+  influx-hostname = "http://127.0.0.1:8086"
   influx-username = "test"
   influx-password = "test"
 
@@ -25,14 +25,14 @@
 [eureka]
   enabled = true
   app-name = "bios-profilemgmt"
-  config-path = "/etc/eureka.gcfg"
+  config-path = "local.gcfg"
   vip-address = "profiles-management.cluster.sitrep-vatcinc.com"
 
 [mongo]
   enabled = false
-  peers = ["database-1.c.vatcinc-sitrep.internal:27017"]
+  peers = ["127.0.0.1:27017"]
 
 [database]
   cassandra-keyspace = "sitrep"
   cassandra-num-connections = 5
-  cassandra-peers = ["database-1.c.vatcinc-sitrep.internal"]
+  cassandra-peers = ["127.0.0.1"]

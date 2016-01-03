@@ -68,6 +68,15 @@ func NewServer(c *Config, buildInfo *BuildInfo) (*Server, error) {
 		panic(err)
 	}
 	dbSession.SetMode(mgo.Monotonic, true)
+	if c.Meta.MongoAuthEnabled {
+		cred := &mgo.Credential{
+			Username: c.Meta.MongoUser,
+			Password: c.Meta.MongoPass,
+		}
+		if err := dbSession.Login(cred); err != nil {
+			panic(err)
+		}
+	}
 	mongo := dbSession.DB(c.Meta.MongoDbName)
 
 	elasticsearch := elastigo.NewConn()
@@ -98,7 +107,7 @@ func NewServer(c *Config, buildInfo *BuildInfo) (*Server, error) {
 	// Append services.
 	//s.appendMongoService(c.Mongo)
 
-	s.appendeurekaService(c.eureka)
+	s.appendeurekaService(c.Eureka)
 	s.appendMetricsReportingService(c.Meta)
 
 	s.appendHTTPDService(c.HTTPD)

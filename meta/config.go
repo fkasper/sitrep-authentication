@@ -1,6 +1,7 @@
 package meta
 
 import (
+	"net"
 	"time"
 
 	//"github.com/vatcinc/bio/toml"
@@ -11,7 +12,7 @@ const (
 	DefaultHostname = "localhost"
 
 	// DefaultBindAddress is the default address to bind to.
-	DefaultBindAddress = ":7727"
+	DefaultBindAddress = ":7717"
 
 	// DefaultHeartbeatTimeout is the default heartbeat timeout for the store.
 	DefaultHeartbeatTimeout = 1000 * time.Millisecond
@@ -32,10 +33,10 @@ const (
 	DefaultLoggingEnabled = true
 
 	//DefaultDatabase = "mongodb://user:pass@server.compose.io/db_name"
-	DefaultDatabase = "mongodb://127.0.0.1:27017/bio"
+	DefaultDatabase = "mongodb://127.0.0.1:27017/sitrep"
 
 	// DefaultDbName sets the mongodb database name
-	DefaultDbName = "bio"
+	DefaultDbName = "sitrep"
 
 	// DefaultElasticSearchUrl sets the default elasticsearch contact point
 	DefaultElasticSearchUrl = "http://localhost:9200"
@@ -51,6 +52,8 @@ const (
 
 	// DefaultInfluxPass defines the password to use with influxDB
 	DefaultInfluxPass = "test"
+
+	DefaultEnableMontoAuth = false
 )
 
 // Config represents the meta configuration.
@@ -60,19 +63,22 @@ type Config struct {
 	BindAddress      string `toml:"bind-address"`
 	LoggingEnabled   bool   `toml:"logging-enabled"`
 	MongoUrl         string `toml:"mongo-url"`
+	MongoUser        string `toml:"mongo-user"`
+	MongoPass        string `toml:"mongo-pass"`
 	MongoDbName      string `toml:"mongo-db-name"`
 	ElasticSearchUrl string `toml:"elastic-search-url"`
 	InfluxDB         string `toml:"influx-database"`
 	InfluxHost       string `toml:"influx-hostname"`
 	InfluxUser       string `toml:"influx-username"`
 	InfluxPass       string `toml:"influx-password"`
+	MongoAuthEnabled bool   `toml:"mongo-enable-auth"`
 }
 
 // NewConfig builds a new configuration with default values.
 func NewConfig() *Config {
 	return &Config{
 		Hostname:         DefaultHostname,
-		BindAddress:      DefaultBindAddress,
+		BindAddress:      getLocalIP(),
 		LoggingEnabled:   DefaultLoggingEnabled,
 		MongoUrl:         DefaultDatabase,
 		MongoDbName:      DefaultDbName,
@@ -81,5 +87,24 @@ func NewConfig() *Config {
 		InfluxHost:       DefaultInfluxHost,
 		InfluxUser:       DefaultInfluxUser,
 		InfluxPass:       DefaultInfluxPass,
+		MongoUser:        "mongo",
+		MongoPass:        "default",
+		MongoAuthEnabled: DefaultEnableMontoAuth,
 	}
+}
+
+func getLocalIP() string {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return ""
+	}
+	for _, address := range addrs {
+		// check the address type and if it is not a loopback the display it
+		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				return ipnet.IP.String()
+			}
+		}
+	}
+	return ""
 }

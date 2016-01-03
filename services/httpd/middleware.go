@@ -1,6 +1,7 @@
 package httpd
 
 import (
+	"bytes"
 	"compress/gzip"
 	"fmt"
 	"io"
@@ -153,15 +154,22 @@ func authenticate(inner func(http.ResponseWriter, *http.Request, *bio.Users), h 
 
 // materializeDomain wraps a handler and ensures that if a domain is required, it exists
 // TODO make redirect more configureable. Move redirect url into db/config
-func materializeDomain(inner func(http.ResponseWriter, *http.Request, *bio.Domains), h *Handler) http.Handler {
+func materializeDomain(inner func(http.ResponseWriter, *http.Request, *models.Domain), h *Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		materialized := &bio.Domains{}
-		domain, port, err := net.SplitHostPort(r.Host)
-		if err != nil {
-			http.Redirect(w, r, "http://bioapp.com", http.StatusTemporaryRedirect)
+		materialized := &models.Domain{}
+		var buffer bytes.Buffer
+		buffer.WriteString(r.Host)
+		if !strings.Contains(r.Host, ":") {
+			buffer.WriteString(":7717")
 		}
-		if err := models.VirtualDomainCheck(h.Cassandra, domain, port, materialized); err != nil {
-			http.Redirect(w, r, "http://bioapp.com", http.StatusTemporaryRedirect)
+		domain, port, err := net.SplitHostPort(strings.TrimSpace(buffer.String()))
+		if err != nil {
+			h.Logger.Fatalln("Domain Err", err.Error())
+			http.Redirect(w, r, "http://sitrep-vatcinc.com", http.StatusTemporaryRedirect)
+		}
+		if err := models.VirtualDomainCheck(h.Mongo, domain, port, materialized); err != nil {
+			h.Logger.Fatalln("Domain Err", err.Error())
+			http.Redirect(w, r, "http://sitrep-vatcinc.com", http.StatusTemporaryRedirect)
 		}
 		inner(w, r, materialized)
 	})
