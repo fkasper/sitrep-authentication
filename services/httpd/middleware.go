@@ -133,12 +133,13 @@ func authenticateWithDomain(inner func(http.ResponseWriter, *http.Request, *mode
 			h.Logger.Fatalln("Domain Err", err.Error())
 			http.Redirect(w, r, redirectDomain, http.StatusTemporaryRedirect)
 		}
+		var user *models.User
+
 		// Return early if we are not authenticating
 		if !requireAuthentication {
-			inner(w, r, materialized, nil)
+			inner(w, r, materialized, user)
 			return
 		}
-		var user *models.User
 		if requireAuthentication {
 			counter := metrics.GetOrRegisterCounter(statAuthFail, h.statMap)
 			token, err := parseCredentials(r)

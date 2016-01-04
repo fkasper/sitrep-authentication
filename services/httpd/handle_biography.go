@@ -25,10 +25,15 @@ func (h *Handler) serveBiographyResult(w http.ResponseWriter, r *http.Request, d
 		}
 	}
 
+	var usr *models.LimitedPrintOutUser
+	if user != nil {
+		usr = user.LimitedReadOut()
+	}
+
 	data := map[string]interface{}{
 		"Domain":     domain,
 		"IsAdmin":    true,
-		"UserData":   user.LimitedReadOut(),
+		"UserData":   usr,
 		"Settings":   settings,
 		"AppVersion": h.Version,
 		//"Biography": bioJson
