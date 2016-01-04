@@ -9,7 +9,6 @@ html lang="en" manifest="/profiles/biography/{{.AppVersion}}.appcache"
     link href="/profiles/biography/{{.AppVersion}}.css" rel="stylesheet"
     link rel="shortcut icon" type="image/png" href="http://sitrep-vatcinc.com/assets/favicon-0bf3d07c1208a2ba358c9ec56ad1101312783f5678a4461cabe05f7a2834bd72.png"
     link rel="stylesheet" media="all" href="http://sitrep-vatcinc.com/assets/application-f87c2a6d61e31deca6b138c6f39ad4a1bf5a4116a25c78dd90fdd4da7fe22cd6.css"
-    script src="/assets/alloy-editor/alloy-editor-all-min.js"
     link href="/assets/alloy-editor/assets/alloy-editor-ocean-min.css" rel="stylesheet"
     = javascript
       window.isAdmin={{.IsAdmin }},
@@ -56,6 +55,7 @@ html lang="en" manifest="/profiles/biography/{{.AppVersion}}.appcache"
       .arcgis-content
         #app
         link href=https://fonts.googleapis.com/css?family=Open+Sans:400,700 rel=stylesheet
-        script src=/profiles/biography/{{.AppVersion}}.js
 
-    script src="http://sitrep-vatcinc.com/assets/application-7ddb155b2261d940b0ccbd0c929fb82e4c061b7541944f59b025adcb675d3d80.js"
+    script src=/assets/application-7ddb155b2261d940b0ccbd0c929fb82e4c061b7541944f59b025adcb675d3d80.js
+    script src=/assets/alloy-editor/alloy-editor-all-min.js
+    script src=/profiles/biography/{{.AppVersion}}.js

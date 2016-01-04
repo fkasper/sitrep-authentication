@@ -4,49 +4,76 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
-	"github.com/gocql/gocql"
-	"github.com/vatcinc/bio/schema"
-	"golang.org/x/crypto/bcrypt"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
+
 	//"fmt"
 )
 
-// USERS is a reference to the users table in cassandra
-var USERS = bio.UsersTableDef()
+const (
+	usersDbColumn = "authentication_users"
+)
 
 // LimitedPrintOutUser is the user that gets printed out to the client
 type LimitedPrintOutUser struct {
-	ID    gocql.UUID `json:"_id,omitempty"`
-	Email string     `json:"email"`
-	Name  string     `json:"name"`
+	ID         bson.ObjectId
+	Email      string
+	Name       string
+	IsAdmin    bool
+	IsOperator bool
+	IsActive   bool
+	Title      string
+	Rank       string
+	Unit       string
+	Image      string
 }
 
-// NewLimitedUser is used as a reduced function set of a user,
+// LimitedReadOut is used as a reduced function set of a user,
 // that gets printed out to the client
-func NewLimitedUser(user bio.Users) LimitedPrintOutUser {
-	return LimitedPrintOutUser{
-		ID:    user.Id,
-		Email: user.Email,
-		Name:  user.Name,
+func (u *User) LimitedReadOut() *LimitedPrintOutUser {
+	return &LimitedPrintOutUser{
+		ID:         u.ID,
+		Email:      u.Email,
+		Name:       u.Name,
+		IsAdmin:    u.IsAdmin,
+		IsOperator: u.IsOperator,
+		IsActive:   u.IsActive,
+		Title:      u.Title,
+		Rank:       u.Rank,
+		Unit:       u.Unit,
+		Image:      u.Image,
 	}
 }
 
-// JWTResponseFormat is an RFC conform response for the OAUTH Standard
-type JWTResponseFormat struct {
-	AccessToken string `json:"access_token"`
-	TokenType   string `json:"token_type"`
-}
-
-// NewJWTResponse prints out a new OAuth token and format
-func NewJWTResponse(token string) *JWTResponseFormat {
-	return &JWTResponseFormat{
-		AccessToken: token,
-		TokenType:   "bearer",
-	}
+// User defines a single user object
+type User struct {
+	ID                   bson.ObjectId `bson:"_id,omitempty"`
+	Email                string        `bson:"email"`
+	EncryptedPassword    string        `bson:"encrypted_password"`
+	Name                 string        `bson:"name"`
+	Rank                 string        `bson:"rank"`
+	Unit                 string        `bson:"unit"`
+	Title                string        `bson:"title"`
+	Role                 string        `bson:"role"`
+	Image                string        `bson:"image"`
+	IsActive             bool          `bson:"active"`
+	IsAdmin              bool          `bson:"is_admin"`
+	IsOperator           bool          `bson:"is_operator"`
+	DomainID             bson.ObjectId `bson:"domain_id"`
+	AuthenticationToken  string        `bson:"cur_authentication_token"`
+	TrackingTokenLong    []string      `bson:"tracking_token_long"`
+	TrackingTokenSession []string      `bson:"tracking_token_session"`
+	TrackingTokenVisit   []string      `bson:"tracking_token_visit"`
+	SignInCount          int           `bson:"sign_in_count"`
+	CurrentSignInAt      time.Time     `bson:"current_sign_in_at"`
+	LastSignInAt         time.Time     `bson:"last_sign_in_at"`
+	CurrentSignInIP      string        `bson:"current_sign_in_ip"`
+	LastSignInIP         string        `bson:"last_sign_in_ip"`
+	HmacSigningKey       []byte        `bson:"hmac_secret"`
 }
 
 // Users define a list of users
-type Users []bio.Users
+type Users []User
 
 // UserInvalidError defines an invalid user record
 // Deprecated. Use InvalidError instead
@@ -59,87 +86,30 @@ func (u *UserInvalidError) Error() string {
 }
 
 // GetKeyForToken receives a key from cassandra based off a specific token
-func GetKeyForToken(cassandra *gocql.ClusterConfig, rawToken string) ([]byte, error) {
-	var user bio.Users
-	session, ctx, _ := WithSession(cassandra)
-	defer session.Close()
-	_, err := ctx.Select().
-		From(USERS).
-		Where(
-		USERS.ACCESS_TOKEN.Eq(rawToken)).
-		Into(
-		USERS.To(&user)).
-		FetchOne(session)
-	//err := user.ByAttr(cassandra, "access_token", rawToken, `hmac_signing_key`)
+func GetKeyForToken(mongo *mgo.Database, rawToken string) ([]byte, error) {
+	var user User
+	err := PrepareQuery(mongo, usersDbColumn).Find(&bson.M{"cur_authentication_token": rawToken}).One(&user)
 	if err != nil {
 		return []byte{}, err
-	}
-	if user.Email == "" {
-		return []byte{}, &UserInvalidError{Message: "No Such User"}
-	}
-	if !user.IsActive {
-		return []byte{}, &UserInvalidError{Message: "No Such User"}
 	}
 	return user.HmacSigningKey, nil
 }
 
 // ValidateUserForDomain validates a user
-func ValidateUserForDomain(cassandra *gocql.ClusterConfig, r *http.Request, accessToken string) error {
-	token, err := jwt.Parse(accessToken, func(token *jwt.Token) (interface{}, error) {
-		// if _, ok := token.Method.(jwt.GetSigningMethod("HS512")); !ok {
-		//     return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
-		// }
-		key, err := GetKeyForToken(cassandra, token.Raw)
-		return key, err
-	})
-
-	if err == nil && token.Valid {
-		return nil
-	}
-
-	return err
-}
-
-// SignInUser signs in a user using specified credentials
-func SignInUser(cassandra *gocql.ClusterConfig, email string, password string, scope string) (interface{}, error) {
-	var user bio.Users
-	if email == "" || password == "" {
-		return user, &UserInvalidError{Message: "No Password or Email"} //TODO: Error
-	}
-	session, ctx, _ := WithSession(cassandra)
-	defer session.Close()
-	_, err := ctx.Select().
-		From(USERS).
-		Where(
-		USERS.EMAIL.Eq(email)).
-		Into(
-		USERS.To(&user)).
-		FetchOne(session)
-
-	if err != nil {
-		return user, err
-	}
-	token := jwt.New(jwt.SigningMethodHS512)
-	token.Claims["sub"] = user.Id
-	token.Claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
-	randKey := RandStringBytesMaskImprSrc(40)
-	tkn, err := token.SignedString(randKey)
-	if err != nil {
-		return user, err
-	}
-	user.AccessToken = tkn
-	user.HmacSigningKey = randKey
-
-	if err := ctx.Upsert(USERS).
-		SetString(USERS.ACCESS_TOKEN, tkn).
-		SetBytes(USERS.HMAC_SIGNING_KEY, randKey).
-		Where(
-		USERS.EMAIL.Eq(email)).
-		Exec(session); err != nil {
-		return user, err
-	}
-	if err := bcrypt.CompareHashAndPassword([]byte(user.EncryptedPassword), []byte(password)); err != nil {
-		return user, err
-	}
-	return NewJWTResponse(user.AccessToken), nil
+func ValidateUserForDomain(mongo *mgo.Database, r *http.Request, accessToken string) error {
+	return nil
+	// token, err := jwt.Parse(accessToken, func(token *jwt.Token) (interface{}, error) {
+	// 	// if _, ok := token.Method.(jwt.GetSigningMethod("HS512")); !ok {
+	// 	//     return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+	// 	// }
+	//
+	// 	key, err := GetKeyForToken(mongo, token.Raw)
+	// 	return key, err
+	// })
+	//
+	// if err == nil && token.Valid {
+	// 	return nil
+	// }
+	//
+	// return err
 }

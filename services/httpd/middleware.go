@@ -14,7 +14,6 @@ import (
 	"code.google.com/p/go-uuid/uuid"
 	"github.com/rcrowley/go-metrics"
 	"github.com/vatcinc/bio/models"
-	"github.com/vatcinc/bio/schema"
 )
 
 // determines if the client can accept compressed responses, and encodes accordingly
@@ -116,45 +115,8 @@ func recovery(inner http.Handler, name string, weblog *log.Logger) http.Handler 
 	})
 }
 
-// authenticate wraps a handler and ensures that if user credentials are passed in
-// an attempt is made to authenticate that user. If authentication fails, an error is returned.
-//
-// There is one exception: if there are no users in the system, authentication is not required. This
-// is to facilitate bootstrapping of a system with authentication enabled.
-func authenticate(inner func(http.ResponseWriter, *http.Request, *bio.Users), h *Handler, requireAuthentication bool) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Return early if we are not authenticating
-		if !requireAuthentication {
-			inner(w, r, nil)
-			return
-		}
-		var user *bio.Users
-		if requireAuthentication {
-			counter := metrics.GetOrRegisterCounter(statAuthFail, h.statMap)
-			token, err := parseCredentials(r)
-			if err != nil {
-				counter.Inc(1)
-				httpError(w, err.Error(), false, http.StatusUnauthorized)
-				return
-			}
-			if token == "" {
-				counter.Inc(1)
-				httpError(w, "token required", false, http.StatusUnauthorized)
-				return
-			}
-			if err := models.ValidateUserForDomain(h.Cassandra, r, token); err != nil {
-				counter.Inc(1)
-				httpError(w, err.Error(), false, http.StatusUnauthorized)
-				return
-			}
-		}
-		inner(w, r, user)
-	})
-}
-
-// materializeDomain wraps a handler and ensures that if a domain is required, it exists
-// TODO make redirect more configureable. Move redirect url into db/config
-func materializeDomain(inner func(http.ResponseWriter, *http.Request, *models.Domain), h *Handler) http.Handler {
+func authenticateWithDomain(inner func(http.ResponseWriter, *http.Request, *models.Domain, *models.User), h *Handler, requireAuthentication bool) http.Handler {
+	redirectDomain := "/authentication_users/sign_in"
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		materialized := &models.Domain{}
 		var buffer bytes.Buffer
@@ -165,13 +127,38 @@ func materializeDomain(inner func(http.ResponseWriter, *http.Request, *models.Do
 		domain, port, err := net.SplitHostPort(strings.TrimSpace(buffer.String()))
 		if err != nil {
 			h.Logger.Fatalln("Domain Err", err.Error())
-			http.Redirect(w, r, "http://sitrep-vatcinc.com", http.StatusTemporaryRedirect)
+			http.Redirect(w, r, redirectDomain, http.StatusTemporaryRedirect)
 		}
 		if err := models.VirtualDomainCheck(h.Mongo, domain, port, materialized); err != nil {
 			h.Logger.Fatalln("Domain Err", err.Error())
-			http.Redirect(w, r, "http://sitrep-vatcinc.com", http.StatusTemporaryRedirect)
+			http.Redirect(w, r, redirectDomain, http.StatusTemporaryRedirect)
 		}
-		inner(w, r, materialized)
+		// Return early if we are not authenticating
+		if !requireAuthentication {
+			inner(w, r, materialized, nil)
+			return
+		}
+		var user *models.User
+		if requireAuthentication {
+			counter := metrics.GetOrRegisterCounter(statAuthFail, h.statMap)
+			token, err := parseCredentials(r)
+			if err != nil {
+				counter.Inc(1)
+				http.Redirect(w, r, redirectDomain, http.StatusTemporaryRedirect)
+				return
+			}
+			if token == "" {
+				counter.Inc(1)
+				http.Redirect(w, r, redirectDomain, http.StatusTemporaryRedirect)
+				return
+			}
+			if err := models.ValidateUserForDomain(h.Mongo, r, token); err != nil {
+				counter.Inc(1)
+				http.Redirect(w, r, redirectDomain, http.StatusTemporaryRedirect)
+				return
+			}
+		}
+		inner(w, r, materialized, user)
 	})
 }
 
@@ -193,6 +180,11 @@ func parseCredentials(r *http.Request) (string, error) {
 			return u[1], nil
 		}
 	}
+	cookie, err := r.Cookie("SITREP_TOKEN")
+	if err == nil {
+		return cookie.Value, nil
+	}
+
 	return "", fmt.Errorf("unable to parse Bearer Auth credentials")
 }
 

@@ -24,6 +24,7 @@ type Biography struct {
 	Nationality         string            `bson:"nationality" json:"nationality"`
 	Religion            string            `bson:"religion" json:"religion"`
 	Age                 string            `bson:"age" json:"age"`
+	UDP                 []interface{}     `bson:"udps" json:"udp"`
 	Gender              string            `bson:"gender" json:"gender"`
 	Downloads           []interface{}     `bson:"downloads" json:"downloads"`
 	Ethnicity           string            `bson:"ethnicity" json:"ethnicity"`
@@ -32,7 +33,6 @@ type Biography struct {
 	LeftIris            string            `bson:"left_iris" json:"left_iris"`
 	RightIris           string            `bson:"right_iris" json:"right_iris"`
 	DomainID            bson.ObjectId     `bson:"domain_id" json:"domain_id"`
-	URLSlug             string            `bson:"url_slug" json:"url_slug"`
 }
 
 // Biographies define a list of Domain
@@ -41,7 +41,7 @@ type Biographies []Biography
 // Fetch returns a biogrphy!
 func (b *Biography) Fetch(mongo *mgo.Database, domain *Domain, slug string) error {
 	err := PrepareQuery(mongo, biographyDbColumn).Find(&bson.M{
-		"url_slug":  slug,
+		"_id":       bson.ObjectIdHex(slug),
 		"domain_id": domain.ID,
 	}).One(&b)
 	if err != nil {
@@ -70,15 +70,14 @@ func (b *Biography) Insert(mongo *mgo.Database, domain *Domain) error {
 		b.ID = bson.NewObjectId()
 	}
 	//return &doc, NewInvalidError(document.ID.String())
-	if b.Name == "" {
-		return NewInvalidError("Name is empty")
-	}
+	// if b.Name == "" {
+	// 	return NewInvalidError("Name is empty")
+	// }
 
 	if b.MainImage == "" {
-		return NewInvalidError("Main Image is empty")
+		return NewInvalidError("Main Image")
 	}
 	b.DomainID = domain.ID
-	b.URLSlug = Slugify(b.Name)
 
 	err := PrepareQuery(mongo, biographyDbColumn).Insert(b)
 	if err != nil {
@@ -94,12 +93,12 @@ func (b *Biography) Update(mongo *mgo.Database, domain *Domain, updated *Biograp
 		return err
 	}
 	//return &doc, NewInvalidError(document.ID.String())
-	if b.Name == "" {
-		return NewInvalidError("Name is empty")
-	}
+	// if b.Name == "" {
+	// 	return NewInvalidError("Name is empty")
+	// }
 
 	if b.MainImage == "" {
-		return NewInvalidError("Main Image is empty")
+		return NewInvalidError("Main Image")
 	}
 	updated.ID = b.ID
 	_, err := PrepareQuery(mongo, biographyDbColumn).UpsertId(b.ID, updated)

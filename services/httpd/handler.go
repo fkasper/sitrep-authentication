@@ -14,7 +14,6 @@ import (
 	"github.com/mattbaird/elastigo/lib"
 	"github.com/rcrowley/go-metrics"
 	"github.com/vatcinc/bio/models"
-	"github.com/vatcinc/bio/schema"
 	"gopkg.in/mgo.v2"
 	// "github.com/gorilla/websocket"
 )
@@ -181,14 +180,18 @@ func (h *Handler) SetRoutes(routes []route) {
 		var handler http.Handler
 
 		// If it's a handler func that requires a domain, wrap it in a domain :lol:
-		if hf, ok := r.handlerFunc.(func(http.ResponseWriter, *http.Request, *models.Domain)); ok {
-			handler = materializeDomain(hf, h)
-		}
+		// if hf, ok := r.handlerFunc.(func(http.ResponseWriter, *http.Request, *models.Domain)); ok {
+		// 	handler = materializeDomain(hf, h)
+		// }
 
 		// If it's a handler func that requires authorization, wrap it in authorization
-		if hf, ok := r.handlerFunc.(func(http.ResponseWriter, *http.Request, *bio.Users)); ok {
-			handler = authenticate(hf, h, h.requireAuthentication)
+		if hf, ok := r.handlerFunc.(func(http.ResponseWriter, *http.Request, *models.Domain, *models.User)); ok {
+			handler = authenticateWithDomain(hf, h, h.requireAuthentication)
 		}
+		// If it's a handler func that requires authorization, wrap it in authorization
+		// if hf, ok := r.handlerFunc.(func(http.ResponseWriter, *http.Request, *models.User)); ok {
+		// 	handler = authenticate(hf, h, h.requireAuthentication)
+		// }
 		// This is a normal handler signature and does not require authorization
 		if hf, ok := r.handlerFunc.(func(http.ResponseWriter, *http.Request)); ok {
 			handler = http.HandlerFunc(hf)
@@ -205,7 +208,7 @@ func (h *Handler) SetRoutes(routes []route) {
 			handler = logging(handler, r.name, h.Logger)
 		}
 
-		handler = recovery(handler, r.name, h.Logger) // make sure recovery is always last
+		// handler = recovery(handler, r.name, h.Logger) // make sure recovery is always last
 
 		h.mux.Add(r.method, r.pattern, handler)
 	}
@@ -248,7 +251,7 @@ func (h *Handler) serveAppCache(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("content-type", "text/cache-manifest")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`CACHE MANIFEST
-# `+h.Version+`
+# ` + h.Version + `
 
 /profiles/biography/` + h.Version + `.json
 /profiles/biography/serviceworker/` + h.Version + `.js

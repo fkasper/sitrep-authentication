@@ -8,7 +8,7 @@ import (
 	"github.com/yosssi/ace"
 )
 
-func (h *Handler) serveBiographyResult(w http.ResponseWriter, r *http.Request, domain *models.Domain) {
+func (h *Handler) serveBiographyResult(w http.ResponseWriter, r *http.Request, domain *models.Domain, user *models.User) {
 	w.Header().Add("content-type", "text/html")
 
 	tpl, err := ace.Load("html/biography", "", nil)
@@ -16,15 +16,19 @@ func (h *Handler) serveBiographyResult(w http.ResponseWriter, r *http.Request, d
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	settings, err := domain.Settings(h.Mongo)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	var settings *models.Setting
+	if domain != nil {
+		settings, err = domain.Settings(h.Mongo)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
+
 	data := map[string]interface{}{
 		"Domain":     domain,
 		"IsAdmin":    true,
-		"UserData":   "",
+		"UserData":   user.LimitedReadOut(),
 		"Settings":   settings,
 		"AppVersion": h.Version,
 		//"Biography": bioJson
@@ -35,7 +39,7 @@ func (h *Handler) serveBiographyResult(w http.ResponseWriter, r *http.Request, d
 	}
 }
 
-func (h *Handler) showBiography(w http.ResponseWriter, r *http.Request, domain *models.Domain) {
+func (h *Handler) showBiography(w http.ResponseWriter, r *http.Request, domain *models.Domain, user *models.User) {
 	var t models.Biography
 	query := r.URL.Query()
 	slug := query.Get("id")
@@ -51,7 +55,7 @@ func (h *Handler) showBiography(w http.ResponseWriter, r *http.Request, domain *
 	w.Write(MarshalJSON(t, false))
 }
 
-func (h *Handler) deleteBiography(w http.ResponseWriter, r *http.Request, domain *models.Domain) {
+func (h *Handler) deleteBiography(w http.ResponseWriter, r *http.Request, domain *models.Domain, user *models.User) {
 	var t models.Biography
 	query := r.URL.Query()
 	slug := query.Get("id")
@@ -67,7 +71,7 @@ func (h *Handler) deleteBiography(w http.ResponseWriter, r *http.Request, domain
 	w.Write(MarshalJSON(t, false))
 }
 
-func (h *Handler) createBiography(w http.ResponseWriter, r *http.Request, domain *models.Domain) {
+func (h *Handler) createBiography(w http.ResponseWriter, r *http.Request, domain *models.Domain, user *models.User) {
 	decoder := json.NewDecoder(r.Body)
 	var t models.Biography
 	err := decoder.Decode(&t)
@@ -82,7 +86,7 @@ func (h *Handler) createBiography(w http.ResponseWriter, r *http.Request, domain
 	w.Header().Add("content-type", "application/json")
 	w.Write(MarshalJSON(t, false))
 }
-func (h *Handler) updateBiography(w http.ResponseWriter, r *http.Request, domain *models.Domain) {
+func (h *Handler) updateBiography(w http.ResponseWriter, r *http.Request, domain *models.Domain, user *models.User) {
 	decoder := json.NewDecoder(r.Body)
 	var target models.Biography
 	var t models.Biography
@@ -101,7 +105,7 @@ func (h *Handler) updateBiography(w http.ResponseWriter, r *http.Request, domain
 	w.Write(MarshalJSON(t, false))
 }
 
-func (h *Handler) indexBiographies(w http.ResponseWriter, r *http.Request, domain *models.Domain) {
+func (h *Handler) indexBiographies(w http.ResponseWriter, r *http.Request, domain *models.Domain, user *models.User) {
 	bios, err := models.IndexBiographies(h.Mongo, domain)
 	if err != nil {
 		httpError(w, err.Error(), false, http.StatusNotFound)
