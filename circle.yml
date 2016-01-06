@@ -16,7 +16,7 @@ dependencies:
     - ~/docker
   override:
     - scripts/ensure-gcloud-installed.sh
-    - if [[ -e ~/docker/image.tar ]]; then docker load -i ~/docker/img.tar; fi
+    - if [[ -e ~/docker/img.tar ]]; then docker load -i ~/docker/img.tar; fi
     - rm -rf $HOME/.gvm; bash < <(curl -s -S -L https://raw.githubusercontent.com/moovweb/gvm/1.0.22/binscripts/gvm-installer)
     - source $HOME/.gvm/scripts/gvm; gvm install go1.5 --binary
 
