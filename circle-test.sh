@@ -66,7 +66,8 @@ exit_if_fail go get -t -d -v ./...
 exit_if_fail git checkout $CIRCLE_BRANCH # 'go get' switches to master. Who knew? Switch back.
 check_go_fmt
 check_go_vet
-exit_if_fail go build -v ./...
+#exit_if_fail go build -v ./...
+exit_if_fail ./build.py
 
 # Run the tests.
 case $CIRCLE_NODE_INDEX in

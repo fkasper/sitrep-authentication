@@ -19,8 +19,6 @@ dependencies:
     - if [[ -e ~/docker/image.tar ]]; then docker load -i ~/docker/image.tar; fi
     - rm -rf $HOME/.gvm; bash < <(curl -s -S -L https://raw.githubusercontent.com/moovweb/gvm/1.0.22/binscripts/gvm-installer)
     - source $HOME/.gvm/scripts/gvm; gvm install go1.5 --binary
-    - docker build -t $EXTERNAL_REGISTRY_ENDPOINT/$PROJECT_NAME:$CIRCLE_SHA1 .
-    - mkdir -p ~/docker; docker save $EXTERNAL_REGISTRY_ENDPOINT/$PROJECT_NAME:$CIRCLE_SHA1 > ~/docker/image.tar
 
 database:
   override:
@@ -36,5 +34,7 @@ deployment:
   prod:
     branch: master
     commands:
+      - docker build -t $EXTERNAL_REGISTRY_ENDPOINT/$PROJECT_NAME:$CIRCLE_SHA1 .
+      - mkdir -p ~/docker; docker save $EXTERNAL_REGISTRY_ENDPOINT/$PROJECT_NAME:$CIRCLE_SHA1 > ~/docker/image.tar
       - scripts/auth-gcloud.sh
       - gcloud docker push $EXTERNAL_REGISTRY_ENDPOINT/$PROJECT_NAME > /dev/null
