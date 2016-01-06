@@ -44,7 +44,7 @@ source $HOME/.gvm/scripts/gvm
 exit_if_fail gvm use $GO_VERSION
 
 # Set up the build directory, and then GOPATH.
-exit_if_fail mkdir $BUILD_DIR
+exit_if_fail mkdir -p $BUILD_DIR
 export GOPATH=$BUILD_DIR
 exit_if_fail mkdir -p $GOPATH/src/github.com/fkasper
 
