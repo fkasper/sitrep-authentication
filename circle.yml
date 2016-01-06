@@ -16,7 +16,7 @@ dependencies:
     - ~/docker
   override:
     - scripts/ensure-gcloud-installed.sh
-    - if [[ -e ~/docker/image.tar ]]; then docker load -i ~/docker/image.tar; fi
+    - if [[ -e ~/docker/image.tar ]]; then docker load -i ~/docker/img.tar; fi
     - rm -rf $HOME/.gvm; bash < <(curl -s -S -L https://raw.githubusercontent.com/moovweb/gvm/1.0.22/binscripts/gvm-installer)
     - source $HOME/.gvm/scripts/gvm; gvm install go1.5 --binary
 
@@ -35,5 +35,5 @@ deployment:
     branch: master
     commands:
       - cd $HOME/sitrep-builds/src/github.com/fkasper/sitrep-biometrics;docker build -t $EXTERNAL_REGISTRY_ENDPOINT/$PROJECT_NAME:$CIRCLE_SHA1 .
-      - cd $HOME/sitrep-builds/src/github.com/fkasper/sitrep-biometrics;mkdir -p ~/docker; docker save $EXTERNAL_REGISTRY_ENDPOINT/$PROJECT_NAME:$CIRCLE_SHA1 > ~/docker/image.tar
+      - cd $HOME/sitrep-builds/src/github.com/fkasper/sitrep-biometrics;mkdir -p ~/docker; docker save $EXTERNAL_REGISTRY_ENDPOINT/$PROJECT_NAME:$CIRCLE_SHA1 > ~/docker/img.tar
       - $HOME/sitrep-builds/src/github.com/fkasper/sitrep-biometrics/scripts/auth-gcloud.sh
