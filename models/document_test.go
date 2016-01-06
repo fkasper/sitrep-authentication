@@ -3,7 +3,7 @@ package models_test
 import (
 	"testing"
 
-	"github.com/vatcinc/bio/models"
+	"github.com/fkasper/sitrep-biometrics/models"
 )
 
 func Test_Document_Structure(t *testing.T) {

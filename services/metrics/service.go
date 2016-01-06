@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/rcrowley/go-metrics"
-	"github.com/vatcinc/bio/meta"
+	"github.com/fkasper/sitrep-biometrics/meta"
 	influxdb "github.com/vrischmann/go-metrics-influxdb"
 )
 

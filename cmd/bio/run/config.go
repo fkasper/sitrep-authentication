@@ -11,11 +11,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/vatcinc/bio/database"
-	"github.com/vatcinc/bio/meta"
-	"github.com/vatcinc/bio/services/eureka"
-	"github.com/vatcinc/bio/services/httpd"
-	"github.com/vatcinc/bio/services/mongo"
+	"github.com/fkasper/sitrep-biometrics/database"
+	"github.com/fkasper/sitrep-biometrics/meta"
+	"github.com/fkasper/sitrep-biometrics/services/eureka"
+	"github.com/fkasper/sitrep-biometrics/services/httpd"
+	"github.com/fkasper/sitrep-biometrics/services/mongo"
 )
 
 // Config represents the configuration format for the bio binary.

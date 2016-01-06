@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/vatcinc/bio/schema"
+	"github.com/fkasper/sitrep-biometrics/schema"
 
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"

@@ -11,12 +11,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fkasper/sitrep-biometrics/meta"
+	"github.com/fkasper/sitrep-biometrics/services/eureka"
+	"github.com/fkasper/sitrep-biometrics/services/httpd"
+	"github.com/fkasper/sitrep-biometrics/services/metrics"
 	"github.com/gocql/gocql"
 	elastigo "github.com/mattbaird/elastigo/lib"
-	"github.com/vatcinc/bio/meta"
-	"github.com/vatcinc/bio/services/eureka"
-	"github.com/vatcinc/bio/services/httpd"
-	"github.com/vatcinc/bio/services/metrics"
 	"gopkg.in/mgo.v2"
 )
 

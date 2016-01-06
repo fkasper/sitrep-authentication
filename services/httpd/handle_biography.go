@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/vatcinc/bio/models"
+	"github.com/fkasper/sitrep-biometrics/models"
 	"github.com/yosssi/ace"
 )
 

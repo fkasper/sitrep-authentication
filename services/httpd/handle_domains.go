@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gocql/gocql"
-	"github.com/vatcinc/bio/models"
-	"github.com/vatcinc/bio/schema"
+	"github.com/fkasper/sitrep-biometrics/models"
+	"github.com/fkasper/sitrep-biometrics/schema"
 )
 
 //
@@ -14,8 +14,8 @@ import (
 // 	"net/http"
 //
 // 	"github.com/gocql/gocql"
-// 	"github.com/vatcinc/bio/models"
-// 	"github.com/vatcinc/bio/schema"
+// 	"github.com/fkasper/sitrep-biometrics/models"
+// 	"github.com/fkasper/sitrep-biometrics/schema"
 // )
 //
 // func (h *Handler) insertDomain(w http.ResponseWriter, r *http.Request, user *bio.Users) {

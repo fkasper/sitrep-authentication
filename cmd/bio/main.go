@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/vatcinc/bio/cmd/bio/help"
-	"github.com/vatcinc/bio/cmd/bio/run"
+	"github.com/fkasper/sitrep-biometrics/cmd/bio/help"
+	"github.com/fkasper/sitrep-biometrics/cmd/bio/run"
 	"io"
 	"log"
 	"math/rand"

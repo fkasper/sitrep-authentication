@@ -42,7 +42,7 @@ DEFAULT_CONFIG = "etc/config.sample.toml"
 
 # META-PACKAGE VARIABLES
 PACKAGE_LICENSE = "Apache 2.0"
-PACKAGE_URL = "https://github.com/vatcinc/bio"
+PACKAGE_URL = "https://github.com/fkasper/sitrep-biometrics"
 MAINTAINER = "XPANDMMI"
 VENDOR = "XPANDMMI"
 DESCRIPTION = "A distributed rich content management framework."

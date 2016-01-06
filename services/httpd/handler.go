@@ -13,7 +13,7 @@ import (
 	"github.com/gocql/gocql"
 	"github.com/mattbaird/elastigo/lib"
 	"github.com/rcrowley/go-metrics"
-	"github.com/vatcinc/bio/models"
+	"github.com/fkasper/sitrep-biometrics/models"
 	"gopkg.in/mgo.v2"
 	// "github.com/gorilla/websocket"
 )

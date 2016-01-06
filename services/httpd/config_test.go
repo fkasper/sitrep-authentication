@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/BurntSushi/toml"
-	"github.com/vatcinc/bio/services/httpd"
+	"github.com/fkasper/sitrep-biometrics/services/httpd"
 )
 
 func TestConfig_Parse(t *testing.T) {

@@ -13,7 +13,7 @@ import (
 
 	"code.google.com/p/go-uuid/uuid"
 	"github.com/rcrowley/go-metrics"
-	"github.com/vatcinc/bio/models"
+	"github.com/fkasper/sitrep-biometrics/models"
 )
 
 // determines if the client can accept compressed responses, and encodes accordingly

@@ -3,7 +3,7 @@ package toml_test
 import (
 	"testing"
 
-	itoml "github.com/vatcinc/bio/toml"
+	itoml "github.com/fkasper/sitrep-biometrics/toml"
 )
 
 // Ensure that megabyte sizes can be parsed.
