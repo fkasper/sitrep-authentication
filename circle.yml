@@ -36,6 +36,4 @@ deployment:
     commands:
       - cd $HOME/sitrep-builds/src/github.com/fkasper/sitrep-biometrics;docker build -t $EXTERNAL_REGISTRY_ENDPOINT/$PROJECT_NAME:$CIRCLE_SHA1 .
       - cd $HOME/sitrep-builds/src/github.com/fkasper/sitrep-biometrics;mkdir -p ~/docker; docker save $EXTERNAL_REGISTRY_ENDPOINT/$PROJECT_NAME:$CIRCLE_SHA1 > ~/docker/image.tar
-      - cd $HOME/sitrep-builds/src/github.com/fkasper/sitrep-biometrics;scripts/auth-gcloud.sh
-      - cd $HOME/sitrep-builds/src/github.com/fkasper/sitrep-biometrics;env
-      - cd $HOME/sitrep-builds/src/github.com/fkasper/sitrep-biometrics;gcloud docker push $EXTERNAL_REGISTRY_ENDPOINT/$PROJECT_NAME > /dev/null
+      - scripts/auth-gcloud.sh
