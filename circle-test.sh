@@ -4,7 +4,7 @@
 # the environment in which the build and test is run, and matches the official
 # build process for bio.
 
-BUILD_DIR=$HOME/sitrep-biometrics
+BUILD_DIR=$HOME/sitrep-builds
 GO_VERSION=go1.5
 PARALLELISM="-parallel 1"
 TIMEOUT="-timeout 300s"
