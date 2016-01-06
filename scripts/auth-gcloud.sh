@@ -1,5 +1,4 @@
 #! /bin/bash
-cd $HOME/sitrep-builds/src/github.com/fkasper/sitrep-biometrics
 
 docker build -t $EXTERNAL_REGISTRY_ENDPOINT/$PROJECT_NAME:$CIRCLE_SHA1 .
 mkdir -p ~/docker; docker save $EXTERNAL_REGISTRY_ENDPOINT/$PROJECT_NAME:$CIRCLE_SHA1 > ~/docker/image.tar

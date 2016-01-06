@@ -34,4 +34,4 @@ deployment:
   prod:
     branch: master
     commands:
-      - scripts/auth-gcloud.sh
+      - cd $HOME/sitrep-builds/src/github.com/fkasper/sitrep-biometrics;scripts/auth-gcloud.sh
