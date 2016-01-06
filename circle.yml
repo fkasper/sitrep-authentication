@@ -34,7 +34,4 @@ deployment:
   prod:
     branch: master
     commands:
-      - docker build -t $EXTERNAL_REGISTRY_ENDPOINT/$PROJECT_NAME:$CIRCLE_SHA1 .
-      - mkdir -p ~/docker; docker save $EXTERNAL_REGISTRY_ENDPOINT/$PROJECT_NAME:$CIRCLE_SHA1 > ~/docker/image.tar
       - scripts/auth-gcloud.sh
-      - gcloud docker push $EXTERNAL_REGISTRY_ENDPOINT/$PROJECT_NAME > /dev/null
