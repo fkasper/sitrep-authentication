@@ -9,8 +9,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/rcrowley/go-metrics"
 	"github.com/fkasper/sitrep-biometrics/meta"
+	"github.com/rcrowley/go-metrics"
 	influxdb "github.com/vrischmann/go-metrics-influxdb"
 )
 

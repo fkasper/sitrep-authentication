@@ -3,9 +3,9 @@ package httpd
 import (
 	"net/http"
 
-	"github.com/gocql/gocql"
 	"github.com/fkasper/sitrep-biometrics/models"
 	"github.com/fkasper/sitrep-biometrics/schema"
+	"github.com/gocql/gocql"
 )
 
 //

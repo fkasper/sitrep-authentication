@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"code.google.com/p/go-uuid/uuid"
-	"github.com/rcrowley/go-metrics"
 	"github.com/fkasper/sitrep-biometrics/models"
+	"github.com/rcrowley/go-metrics"
 )
 
 // determines if the client can accept compressed responses, and encodes accordingly

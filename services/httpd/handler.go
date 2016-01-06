@@ -10,10 +10,10 @@ import (
 	"strings"
 
 	"github.com/bmizerany/pat"
+	"github.com/fkasper/sitrep-biometrics/models"
 	"github.com/gocql/gocql"
 	"github.com/mattbaird/elastigo/lib"
 	"github.com/rcrowley/go-metrics"
-	"github.com/fkasper/sitrep-biometrics/models"
 	"gopkg.in/mgo.v2"
 	// "github.com/gorilla/websocket"
 )
