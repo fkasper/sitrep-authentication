@@ -57,7 +57,7 @@ echo "\$CIRCLE_BRANCH: $CIRCLE_BRANCH"
 
 # Move the checked-out source to a better location.
 exit_if_fail mv $HOME/sitrep-biometrics $GOPATH/src/github.com/fkasper
-exit_if_fail cd $GOPATH/src/github.com/kasper/sitrep-biometrics
+exit_if_fail cd $GOPATH/src/github.com/fkasper/sitrep-biometrics
 exit_if_fail git branch --set-upstream-to=origin/$CIRCLE_BRANCH $CIRCLE_BRANCH
 
 # Install the code.
