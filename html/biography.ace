@@ -11,8 +11,11 @@ html lang="en" manifest="/profiles/biography/{{.AppVersion}}.appcache"
     link rel="stylesheet" media="all" href="http://sitrep-vatcinc.com/assets/application-f87c2a6d61e31deca6b138c6f39ad4a1bf5a4116a25c78dd90fdd4da7fe22cd6.css"
     link href="/assets/alloy-editor/assets/alloy-editor-ocean-min.css" rel="stylesheet"
     = javascript
-      window.isAdmin={{.IsAdmin }},
-      window.settings={user:{{ .UserData }},domain:{{.Domain}},settings:{{ .Settings }}},
+      var isAdmin=true;
+      var serviceTopology={user:{{ .UserData }},domain:{{.Domain}},settings:{{ .Settings }}};
+
+
+      //legacy
       window.apiHostBiography="",
       window.apiHost="";
   body

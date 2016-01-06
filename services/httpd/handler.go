@@ -41,6 +41,16 @@ type route struct {
 	handlerFunc interface{}
 }
 
+// Feature describes additional beta and rollback features in a component
+// livecycle
+type Feature struct {
+	ID                      string
+	Name                    string
+	GlobPermissions         bool
+	RequiredPermissionLevel string
+	GlobAvailable           bool
+}
+
 // Handler represents an HTTP handler for the InfluxDB server.
 type Handler struct {
 	mux                   *pat.PatternServeMux
@@ -54,6 +64,7 @@ type Handler struct {
 	Elasticsearch  *elastigo.Conn
 	Cassandra      *gocql.ClusterConfig
 	statMap        metrics.Registry
+	Feature        *Feature
 	//statMap        *expvar.Map
 }
 
@@ -70,6 +81,13 @@ func NewHandler(requireAuthentication, loggingEnabled, writeTrace bool) *Handler
 		loggingEnabled:        loggingEnabled,
 		WriteTrace:            writeTrace,
 		statMap:               metrics.DefaultRegistry,
+		Feature: &Feature{
+			ID:                      "nyi",
+			Name:                    "demo-feature",
+			GlobPermissions:         true,
+			RequiredPermissionLevel: "user",
+			GlobAvailable:           true,
+		},
 	}
 
 	h.SetRoutes([]route{
@@ -132,6 +150,10 @@ func NewHandler(requireAuthentication, loggingEnabled, writeTrace bool) *Handler
 		route{
 			"biography",
 			"GET", "/profiles/biography/:name/:action", true, true, h.serveBiographyResult,
+		},
+		route{
+			"biography",
+			"GET", "/profiles/arcgis/:profile", true, true, h.serveArcGISMap,
 		},
 		route{
 			"healthcheck",
@@ -208,7 +230,7 @@ func (h *Handler) SetRoutes(routes []route) {
 			handler = logging(handler, r.name, h.Logger)
 		}
 
-		// handler = recovery(handler, r.name, h.Logger) // make sure recovery is always last
+		handler = recovery(handler, r.name, h.Logger) // make sure recovery is always last
 
 		h.mux.Add(r.method, r.pattern, handler)
 	}

@@ -153,13 +153,15 @@ func authenticateWithDomain(inner func(http.ResponseWriter, *http.Request, *mode
 				http.Redirect(w, r, redirectDomain, http.StatusTemporaryRedirect)
 				return
 			}
-			if err := models.ValidateUserForDomain(h.Mongo, r, token); err != nil {
+			user, err := models.ValidateUserForDomain(h.Mongo, r, token)
+			if err != nil {
 				counter.Inc(1)
 				http.Redirect(w, r, redirectDomain, http.StatusTemporaryRedirect)
 				return
 			}
+			inner(w, r, materialized, &user)
+			return
 		}
-		inner(w, r, materialized, user)
 	})
 }
 

@@ -8,6 +8,48 @@ import (
 	"github.com/yosssi/ace"
 )
 
+func (h *Handler) serveArcGISMap(w http.ResponseWriter, r *http.Request, domain *models.Domain, user *models.User) {
+	w.Header().Add("content-type", "text/html")
+
+	tpl, err := ace.Load("html/arcgis", "", nil)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	var settings *models.Setting
+	if domain != nil {
+		settings, err = domain.Settings(h.Mongo)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
+	var usr *models.LimitedPrintOutUser
+	if user != nil {
+		usr = user.LimitedReadOut()
+	}
+
+	data := map[string]interface{}{
+		"Settings": map[string]interface{}{
+			"DomainData":       domain,
+			"ServerName":       "",
+			"UserData":         usr,
+			"SiteSettingsData": settings,
+			"AppVersion":       h.Version,
+		},
+		"Renderer": map[string]interface{}{
+			"Feature": h.Feature,
+		},
+
+		//"Biography": bioJson
+	}
+	if err := tpl.Execute(w, data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
 func (h *Handler) serveBiographyResult(w http.ResponseWriter, r *http.Request, domain *models.Domain, user *models.User) {
 	w.Header().Add("content-type", "text/html")
 
@@ -31,11 +73,17 @@ func (h *Handler) serveBiographyResult(w http.ResponseWriter, r *http.Request, d
 	}
 
 	data := map[string]interface{}{
-		"Domain":     domain,
-		"IsAdmin":    true,
-		"UserData":   usr,
-		"Settings":   settings,
-		"AppVersion": h.Version,
+		"Settings": map[string]interface{}{
+			"DomainData":       domain,
+			"ServerName":       "",
+			"UserData":         usr,
+			"SiteSettingsData": settings,
+			"AppVersion":       h.Version,
+		},
+		"Renderer": map[string]interface{}{
+			"Feature": h.Feature,
+		},
+
 		//"Biography": bioJson
 	}
 	if err := tpl.Execute(w, data); err != nil {
@@ -61,6 +109,10 @@ func (h *Handler) showBiography(w http.ResponseWriter, r *http.Request, domain *
 }
 
 func (h *Handler) deleteBiography(w http.ResponseWriter, r *http.Request, domain *models.Domain, user *models.User) {
+	if err := user.CheckPermission("delete_biography"); err != nil {
+		httpError(w, "You don't have permission to perform this action", false, http.StatusUnauthorized)
+		return
+	}
 	var t models.Biography
 	query := r.URL.Query()
 	slug := query.Get("id")
@@ -77,6 +129,10 @@ func (h *Handler) deleteBiography(w http.ResponseWriter, r *http.Request, domain
 }
 
 func (h *Handler) createBiography(w http.ResponseWriter, r *http.Request, domain *models.Domain, user *models.User) {
+	if err := user.CheckPermission("create_biography"); err != nil {
+		httpError(w, "You don't have permission to perform this action", false, http.StatusUnauthorized)
+		return
+	}
 	decoder := json.NewDecoder(r.Body)
 	var t models.Biography
 	err := decoder.Decode(&t)
@@ -92,6 +148,10 @@ func (h *Handler) createBiography(w http.ResponseWriter, r *http.Request, domain
 	w.Write(MarshalJSON(t, false))
 }
 func (h *Handler) updateBiography(w http.ResponseWriter, r *http.Request, domain *models.Domain, user *models.User) {
+	if err := user.CheckPermission("update_biography"); err != nil {
+		httpError(w, "You don't have permission to perform this action", false, http.StatusUnauthorized)
+		return
+	}
 	decoder := json.NewDecoder(r.Body)
 	var target models.Biography
 	var t models.Biography
@@ -111,6 +171,10 @@ func (h *Handler) updateBiography(w http.ResponseWriter, r *http.Request, domain
 }
 
 func (h *Handler) indexBiographies(w http.ResponseWriter, r *http.Request, domain *models.Domain, user *models.User) {
+	if err := user.CheckPermission("index_biography"); err != nil {
+		httpError(w, "You don't have permission to perform this action", false, http.StatusUnauthorized)
+		return
+	}
 	bios, err := models.IndexBiographies(h.Mongo, domain)
 	if err != nil {
 		httpError(w, err.Error(), false, http.StatusNotFound)

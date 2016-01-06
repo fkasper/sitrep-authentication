@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
+
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
@@ -85,31 +87,42 @@ func (u *UserInvalidError) Error() string {
 	return u.Message
 }
 
-// GetKeyForToken receives a key from cassandra based off a specific token
-func GetKeyForToken(mongo *mgo.Database, rawToken string) ([]byte, error) {
+// GetUserForToken receives a key from cassandra based off a specific token
+func GetUserForToken(mongo *mgo.Database, rawToken string) (User, error) {
 	var user User
 	err := PrepareQuery(mongo, usersDbColumn).Find(&bson.M{"cur_authentication_token": rawToken}).One(&user)
 	if err != nil {
-		return []byte{}, err
+		return user, err
 	}
-	return user.HmacSigningKey, nil
+	return user, nil
 }
 
 // ValidateUserForDomain validates a user
-func ValidateUserForDomain(mongo *mgo.Database, r *http.Request, accessToken string) error {
+func ValidateUserForDomain(mongo *mgo.Database, r *http.Request, accessToken string) (User, error) {
+	var user User
+	var err error
+	token, err := jwt.Parse(accessToken, func(token *jwt.Token) (interface{}, error) {
+		// if _, ok := token.Method.(jwt.GetSigningMethod("HS512")); !ok {
+		//     return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		// }
+
+		user, err = GetUserForToken(mongo, token.Raw)
+		if err != nil {
+			return []byte{}, err
+		}
+
+		return user.HmacSigningKey, nil
+	})
+
+	if err == nil && token.Valid {
+		return user, nil
+	}
+
+	return user, err
+}
+
+// CheckPermission queries the user database if a user should have permission to
+// execute an action
+func (u *User) CheckPermission(action string) error {
 	return nil
-	// token, err := jwt.Parse(accessToken, func(token *jwt.Token) (interface{}, error) {
-	// 	// if _, ok := token.Method.(jwt.GetSigningMethod("HS512")); !ok {
-	// 	//     return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
-	// 	// }
-	//
-	// 	key, err := GetKeyForToken(mongo, token.Raw)
-	// 	return key, err
-	// })
-	//
-	// if err == nil && token.Valid {
-	// 	return nil
-	// }
-	//
-	// return err
 }
