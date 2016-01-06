@@ -26,9 +26,9 @@ database:
 
 
 test:
-  override:
-    - bash circle-test.sh:
-      parallel: true
+    override:
+        - bash circle-test.sh:
+            parallel: true
 
 deployment:
   prod:
