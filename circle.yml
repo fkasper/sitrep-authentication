@@ -24,9 +24,11 @@ database:
   override:
     - echo
 
+
 test:
   override:
-    - exit 0
+    - bash circle-test.sh:
+      parallel: true
 
 deployment:
   prod:
