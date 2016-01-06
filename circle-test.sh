@@ -4,7 +4,7 @@
 # the environment in which the build and test is run, and matches the official
 # build process for bio.
 
-BUILD_DIR=$HOME/bio-build
+BUILD_DIR=$HOME/sitrep-biometrics
 GO_VERSION=go1.5
 PARALLELISM="-parallel 1"
 TIMEOUT="-timeout 300s"
@@ -46,7 +46,7 @@ exit_if_fail gvm use $GO_VERSION
 # Set up the build directory, and then GOPATH.
 exit_if_fail mkdir $BUILD_DIR
 export GOPATH=$BUILD_DIR
-exit_if_fail mkdir -p $GOPATH/src/github.com/bioapp
+exit_if_fail mkdir -p $GOPATH/src/github.com/fkasper
 
 # Dump some test config to the log.
 echo "Test configuration"
@@ -56,12 +56,12 @@ echo "\$GOPATH: $GOPATH"
 echo "\$CIRCLE_BRANCH: $CIRCLE_BRANCH"
 
 # Move the checked-out source to a better location.
-exit_if_fail mv $HOME/api $GOPATH/src/github.com/bioapp
-exit_if_fail cd $GOPATH/src/github.com/vatcinc/bio
+exit_if_fail mv $HOME/sitrep-biometrics $GOPATH/src/github.com/fkasper
+exit_if_fail cd $GOPATH/src/github.com/kasper/sitrep-biometrics
 exit_if_fail git branch --set-upstream-to=origin/$CIRCLE_BRANCH $CIRCLE_BRANCH
 
 # Install the code.
-exit_if_fail cd $GOPATH/src/github.com/vatcinc/bio
+exit_if_fail cd $GOPATH/src/github.com/fkasper/sitrep-biometrics
 exit_if_fail go get -t -d -v ./...
 exit_if_fail git checkout $CIRCLE_BRANCH # 'go get' switches to master. Who knew? Switch back.
 check_go_fmt
