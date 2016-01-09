@@ -8,7 +8,7 @@ html lang="en" manifest="/profiles/biography/{{.AppVersion}}.appcache"
     title SITREP Exercise
     link href="/profiles/biography/{{.AppVersion}}.css" rel="stylesheet"
     link rel="shortcut icon" type="image/png" href="http://sitrep-vatcinc.com/assets/favicon-0bf3d07c1208a2ba358c9ec56ad1101312783f5678a4461cabe05f7a2834bd72.png"
-    link rel="stylesheet" media="all" href="http://sitrep-vatcinc.com/assets/application-f87c2a6d61e31deca6b138c6f39ad4a1bf5a4116a25c78dd90fdd4da7fe22cd6.css"
+    link rel="stylesheet" media="all" href="/assets/application-f87c2a6d61e31deca6b138c6f39ad4a1bf5a4116a25c78dd90fdd4da7fe22cd6.css"
     link href="/assets/alloy-editor/assets/alloy-editor-ocean-min.css" rel="stylesheet"
     = javascript
       var isAdmin=true;
@@ -59,6 +59,6 @@ html lang="en" manifest="/profiles/biography/{{.AppVersion}}.appcache"
         #app
         link href=https://fonts.googleapis.com/css?family=Open+Sans:400,700 rel=stylesheet
 
-    script src=/assets/application-7ddb155b2261d940b0ccbd0c929fb82e4c061b7541944f59b025adcb675d3d80.js
+    script src=/assets/application-dd04bb1491256cb4ca9c6a062aad18bc0bb41c0723a904518d73f4261af629d1.js
     script src=/assets/alloy-editor/alloy-editor-all-min.js
     script src=/profiles/biography/{{.AppVersion}}.js

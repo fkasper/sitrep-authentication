@@ -19,6 +19,8 @@ type Biography struct {
 	LeftImage           string            `bson:"left_image" json:"left_image"`
 	RightImage          string            `bson:"right_image" json:"right_image"`
 	Name                string            `bson:"name" json:"name"`
+	MapCenter           string            `bson:"map_center" json:"map_center"`
+	BoundingBox         string            `bson:"bounding_box" json:"boundary_box"`
 	Title               string            `bson:"title" json:"title"`
 	Summary             string            `bson:"summary" json:"summary"`
 	Nationality         string            `bson:"nationality" json:"nationality"`
