@@ -6,9 +6,7 @@ import (
 
 	"log"
 	"net"
-	"os/signal"
 	"strconv"
-	"syscall"
 	"time"
 
 	"github.com/hudl/fargo"
@@ -76,27 +74,27 @@ func NewService(host string, port int, c Config) *Service {
 // Open starts the service
 func (s *Service) Open() error {
 	e, err := fargo.NewConnFromConfigFile(s.config)
+	e.Retries = 1
 	if err != nil {
-		s.err <- err
-		return nil
+		return err
 	}
 	s.eureka = e
 	s.Logger.Println("Starting EUREKA discovery")
 
-	exitChannel := make(chan os.Signal, 1)
-	signal.Notify(exitChannel, os.Interrupt)
-	signal.Notify(exitChannel, syscall.SIGTERM)
+	// exitChannel := make(chan os.Signal, 1)
+	// signal.Notify(exitChannel, os.Interrupt)
+	// signal.Notify(exitChannel, syscall.SIGTERM)
 
+	if err := s.eureka.RegisterInstance(&s.instance); err != nil {
+		//s.Logger.Fatalf("Everythixng broken!")
+		return err
+	}
 	go func() {
-
-		err = s.eureka.RegisterInstance(&s.instance)
-		if err != nil {
-			s.err <- err
-		}
 
 		for _ = range s.ticker.C {
 			err := s.eureka.HeartBeatInstance(&s.instance)
 			if err != nil {
+				s.Logger.Fatalf("Got a 404. Fail Fast!")
 				s.err <- err
 			}
 		}
@@ -109,7 +107,7 @@ func (s *Service) Close() error {
 	s.ticker.Stop()
 	err := s.eureka.DeregisterInstance(&s.instance)
 	if err != nil {
-		s.err <- err
+		return err
 	}
 	return nil
 }
@@ -136,7 +134,9 @@ func (s *Service) SetLogger(l *log.Logger) {
 }
 
 // Err returns a channel for fatal errors that occur on the listener.
-func (s *Service) Err() <-chan error { return s.err }
+func (s *Service) Err() <-chan error {
+	return s.err
+}
 
 // Addr returns the listener's address. Returns nil if listener is closed.
 func (s *Service) Addr() net.Addr {
