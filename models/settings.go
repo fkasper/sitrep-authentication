@@ -17,6 +17,7 @@ type Setting struct {
 	AdminUsers  []bson.ObjectId        `bson:"admin_users"`
 	SettingsObj map[string]interface{} `bson:"settings_obj"`
 	Features    []bson.ObjectId        `bson:"features"`
+	Values      map[string]interface{} `bson:"values"`
 }
 
 // Settings define a list of Setting

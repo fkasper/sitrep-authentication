@@ -8,57 +8,99 @@ html lang="en" manifest="/profiles/biography/{{.AppVersion}}.appcache"
     title SITREP Exercise
     link href="/profiles/biography/{{.AppVersion}}.css" rel="stylesheet"
     link rel="shortcut icon" type="image/png" href="http://sitrep-vatcinc.com/assets/favicon-0bf3d07c1208a2ba358c9ec56ad1101312783f5678a4461cabe05f7a2834bd72.png"
-    link rel="stylesheet" media="all" href="/assets/application-f87c2a6d61e31deca6b138c6f39ad4a1bf5a4116a25c78dd90fdd4da7fe22cd6.css"
+    link rel="stylesheet" media="all" href="//sitrep-vatcinc.com/assets/dist/styles/main.daef1af0.css"
     link href="/assets/alloy-editor/assets/alloy-editor-ocean-min.css" rel="stylesheet"
     = javascript
       var isAdmin=true;
       var serviceTopology={user:{{ .UserData }},domain:{{.Domain}},settings:{{ .Settings }}};
-
+      var modulesDef = {"additionalModules":[
+        {"ident":"vatc-menu-app","name":"VATC Menu App Beta 1.1","require":"https://storage.googleapis.com/sitrep-static-assets/assets/app07399d142db.js"},
+        {"ident":"vatc-bio-app","name":"VATC Biographies","require":"/profiles/biography/{{.AppVersion}}.js"}
+      ],
+      "settings":{"vatc-menu-app":{"into":"sidebar-app"}}};
 
       //legacy
       window.apiHostBiography="",
       window.apiHost="";
   body
     .main-area
-      .site-sidebar-container#sidebar-app
-        .site-sidebar
-          .logo
-            img style="width:100%" src="/api/v2/img/logo"
 
-          .hide-mobile.responsive-menu
-            ul.menu
-              li.active
-                a href="/"
-                  i.material-icons
-                    home
-                  Home
-              li
-                a href="/intellipedia"
-                  i.material-icons
-                    info_outline
-                  Intellipedia
-              li
-                a href="/s/publicly-available-information"
-                  i.material-icons
-                    extension
-                  Publicly Available Information
-              li
-                a href="/dashboard"
-                  i.material-icons
-                    trending_up
-                  Trainer Dashboard
-            .ldrop
-              i.material-icons language
-              Language
-            .langselect
-              .lang EN
-              .lang ES
-              .lang DE
+      .site-sidebar-container#sidebar-app
+        .site-sidebar-loader.loader
+          .spinner
+            .double-bounce1
+            .double-bounce2
+          .loading Loading Sidebar
+
 
       .arcgis-content
         #app
+          .loader
+            .spinner
+              .double-bounce1.dark
+              .double-bounce2.dark
+          .loading Loading Biographies
         link href=https://fonts.googleapis.com/css?family=Open+Sans:400,700 rel=stylesheet
 
-    script src=/assets/application-dd04bb1491256cb4ca9c6a062aad18bc0bb41c0723a904518d73f4261af629d1.js
+    script src="//sitrep-vatcinc.com/assets/dist/scripts/vendor.0c87564a.js"
+    script src="//sitrep-vatcinc.com/assets/dist/scripts/main.c2bdad2a.js"
     script src=/assets/alloy-editor/alloy-editor-all-min.js
-    script src=/profiles/biography/{{.AppVersion}}.js
+    = css
+      .site-sidebar-loader {
+        position: fixed;
+        left: 0;
+        bottom: 0;
+        top: 0;
+        width: 25.58941%;
+        height: 100%;
+        background: #545454;
+        color: #ccc;
+        border-right: 1px solid #ccc;
+        height: 100%;
+        margin-right: 0;
+        z-index: 9;
+      }
+      .spinner {
+      width: 40px;
+      height: 40px;
+
+      position: relative;
+      margin: auto;
+      }
+
+      .double-bounce1, .double-bounce2 {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background-color: #fefefe;
+      opacity: 0.6;
+      position: absolute;
+      top: 0;
+      left: 0;
+
+      -webkit-animation: sk-bounce 2.0s infinite ease-in-out;
+      animation: sk-bounce 2.0s infinite ease-in-out;
+      }
+      .double-bounce1.dark, .double-bounce2.dark {
+        background-color: #393939;
+
+      }
+      .double-bounce2 {
+      -webkit-animation-delay: -1.0s;
+      animation-delay: -1.0s;
+      }
+
+      @-webkit-keyframes sk-bounce {
+      0%, 100% { -webkit-transform: scale(0.0) }
+      50% { -webkit-transform: scale(1.0) }
+      }
+
+      @keyframes sk-bounce {
+      0%, 100% {
+        transform: scale(0.0);
+        -webkit-transform: scale(0.0);
+      } 50% {
+        transform: scale(1.0);
+        -webkit-transform: scale(1.0);
+      }
+      }

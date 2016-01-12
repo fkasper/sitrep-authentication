@@ -17,7 +17,7 @@
 [http]
   enabled = true
   bind-address = ":7717"
-  auth-enabled = true
+  auth-enabled = false
   log-enabled = true
   write-tracing = false
   pprof-enabled = false
