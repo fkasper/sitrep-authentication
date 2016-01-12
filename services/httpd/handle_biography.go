@@ -31,7 +31,10 @@ func (h *Handler) serveArcGISMap(w http.ResponseWriter, r *http.Request, domain 
 	}
 
 	data := map[string]interface{}{
+		"IsAdmin":    true,
+		"AppVersion": h.Version,
 		"Settings": map[string]interface{}{
+			"IsAdmin":          true,
 			"DomainData":       domain,
 			"ServerName":       "",
 			"UserData":         usr,
