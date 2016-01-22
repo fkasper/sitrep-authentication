@@ -1,12 +1,10 @@
 package httpd
 
 import (
-	"bytes"
 	"compress/gzip"
 	"fmt"
 	"io"
 	"log"
-	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -119,17 +117,12 @@ func authenticateWithDomain(inner func(http.ResponseWriter, *http.Request, *mode
 	redirectDomain := "/authentication_users/sign_in"
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		materialized := &models.Domain{}
-		var buffer bytes.Buffer
-		buffer.WriteString(r.Host)
-		if !strings.Contains(r.Host, ":") {
-			buffer.WriteString(":7717")
-		}
-		domain, port, err := net.SplitHostPort(strings.TrimSpace(buffer.String()))
+		domainName, err := parseDomain(r)
 		if err != nil {
 			h.Logger.Fatalln("Domain Err", err.Error())
 			http.Redirect(w, r, redirectDomain, http.StatusTemporaryRedirect)
 		}
-		if err := models.VirtualDomainCheck(h.Mongo, domain, port, materialized); err != nil {
+		if err := models.VirtualDomainCheck(h.Mongo, domainName, "irrelevant", materialized); err != nil {
 			h.Logger.Fatalln("Domain Err", err.Error())
 			http.Redirect(w, r, redirectDomain, http.StatusTemporaryRedirect)
 		}
@@ -163,6 +156,23 @@ func authenticateWithDomain(inner func(http.ResponseWriter, *http.Request, *mode
 			return
 		}
 	})
+}
+
+func parseDomain(r *http.Request) (string, error) {
+	q := r.URL.Query()
+
+	if u := q.Get("exercise_ident"); u != "" {
+		return u, nil
+	}
+	if len(r.Header["X-EXERCISE-ID"]) > 0 {
+		return r.Header["Authorization"][0], nil
+	}
+	cookie, err := r.Cookie("ex_id")
+	if err == nil {
+		return cookie.Value, nil
+	}
+
+	return "", fmt.Errorf("unable to parse Domain")
 }
 
 // parseCredentials returns the acccess token encoded in
