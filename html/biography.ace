@@ -1,12 +1,12 @@
 = doctype html
-html lang="en" manifest="/profiles/biography/{{.AppVersion}}.appcache"
+html lang="en" manifest="/profiles/authenticationgraphy/{{.AppVersion}}.appcache"
   head
     meta charset="utf-8"
     meta name="viewport" content="width=device-width,initial-scale=1"
-    link rel="manifest" href="/profiles/biography/{{.AppVersion}}.json"
+    link rel="manifest" href="/profiles/authenticationgraphy/{{.AppVersion}}.json"
     meta name="mobile-web-app-capable" content="yes"
     title SITREP Exercise
-    link href="/profiles/biography/{{.AppVersion}}.css" rel="stylesheet"
+    link href="/profiles/authenticationgraphy/{{.AppVersion}}.css" rel="stylesheet"
     link rel="shortcut icon" type="image/png" href="http://sitrep-vatcinc.com/assets/favicon-0bf3d07c1208a2ba358c9ec56ad1101312783f5678a4461cabe05f7a2834bd72.png"
     link rel="stylesheet" media="all" href="//sitrep-vatcinc.com/assets/dist/styles/main.daef1af0.css"
     link href="/assets/alloy-editor/assets/alloy-editor-ocean-min.css" rel="stylesheet"
@@ -15,12 +15,12 @@ html lang="en" manifest="/profiles/biography/{{.AppVersion}}.appcache"
       var serviceTopology={user:{{ .UserData }},domain:{{.Domain}},settings:{{ .Settings }}};
       var modulesDef = {"additionalModules":[
         {"ident":"vatc-menu-app","name":"VATC Menu App Beta 1.1","require":"https://storage.googleapis.com/sitrep-static-assets/assets/app07399d142db.js"},
-        {"ident":"vatc-bio-app","name":"VATC Biographies","require":"/profiles/biography/{{.AppVersion}}.js"}
+        {"ident":"vatc-authentication-app","name":"VATC authenticationgraphies","require":"/profiles/authenticationgraphy/{{.AppVersion}}.js"}
       ],
       "settings":{"vatc-menu-app":{"into":"sidebar-app"}}};
 
       //legacy
-      window.apiHostBiography="",
+      window.apiHostauthenticationgraphy="",
       window.apiHost="";
   body
     .main-area
@@ -39,7 +39,7 @@ html lang="en" manifest="/profiles/biography/{{.AppVersion}}.appcache"
             .spinner
               .double-bounce1.dark
               .double-bounce2.dark
-          .loading Loading Biographies
+          .loading Loading authenticationgraphies
         link href=https://fonts.googleapis.com/css?family=Open+Sans:400,700 rel=stylesheet
 
     script src="//sitrep-vatcinc.com/assets/dist/scripts/vendor.0c87564a.js"

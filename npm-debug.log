@@ -1,0 +1,21 @@
+0 info it worked if it ends with ok
+1 verbose cli [ '/Users/f/.nvm/versions/node/v0.12.7/bin/node',
+1 verbose cli   '/Users/f/.nvm/versions/node/v0.12.7/bin/npm',
+1 verbose cli   'run',
+1 verbose cli   'build' ]
+2 info using npm@2.11.3
+3 info using node@v0.12.7
+4 verbose stack Error: ENOENT, open '/Users/f/.gvm/pkgsets/go1.5/global/src/github.com/fkasper/sitrep-authentication/package.json'
+4 verbose stack     at Error (native)
+5 verbose cwd /Users/f/.gvm/pkgsets/go1.5/global/src/github.com/fkasper/sitrep-authentication
+6 error Darwin 15.2.0
+7 error argv "/Users/f/.nvm/versions/node/v0.12.7/bin/node" "/Users/f/.nvm/versions/node/v0.12.7/bin/npm" "run" "build"
+8 error node v0.12.7
+9 error npm  v2.11.3
+10 error path /Users/f/.gvm/pkgsets/go1.5/global/src/github.com/fkasper/sitrep-authentication/package.json
+11 error code ENOENT
+12 error errno -2
+13 error enoent ENOENT, open '/Users/f/.gvm/pkgsets/go1.5/global/src/github.com/fkasper/sitrep-authentication/package.json'
+13 error enoent This is most likely not a problem with npm itself
+13 error enoent and is related to npm not being able to find a file.
+14 verbose exit [ -2, true ]

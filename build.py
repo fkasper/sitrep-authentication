@@ -1,6 +1,6 @@
 #!/usr/bin/env python2.7
 #
-# This is the bio build script.
+# This is the authentication build script.
 #
 # Current caveats:
 #   - Does not currently build ARM builds/packages
@@ -26,14 +26,14 @@ except ImportError:
 
 # PACKAGING VARIABLES
 INSTALL_ROOT_DIR = "/usr/bin"
-LOG_DIR = "/var/log/bio"
-DATA_DIR = "/var/lib/bio"
-SCRIPT_DIR = "/usr/lib/bio/scripts"
-CONFIG_DIR = "/etc/bio"
+LOG_DIR = "/var/log/authentication"
+DATA_DIR = "/var/lib/authentication"
+SCRIPT_DIR = "/usr/lib/authentication/scripts"
+CONFIG_DIR = "/etc/authentication"
 LOGROTATE_DIR = "/etc/logrotate.d"
 
 INIT_SCRIPT = "scripts/init.sh"
-SYSTEMD_SCRIPT = "scripts/bio.service"
+SYSTEMD_SCRIPT = "scripts/authentication.service"
 PREINST_SCRIPT = "scripts/pre-install.sh"
 POSTINST_SCRIPT = "scripts/post-install.sh"
 POSTUNINST_SCRIPT = "scripts/post-uninstall.sh"
@@ -42,7 +42,7 @@ DEFAULT_CONFIG = "etc/config.sample.toml"
 
 # META-PACKAGE VARIABLES
 PACKAGE_LICENSE = "Apache 2.0"
-PACKAGE_URL = "https://github.com/fkasper/sitrep-biometrics"
+PACKAGE_URL = "https://github.com/fkasper/sitrep-authentication"
 MAINTAINER = "XPANDMMI"
 VENDOR = "XPANDMMI"
 DESCRIPTION = "A distributed rich content management framework."
@@ -74,7 +74,7 @@ fpm_common_args = "-f -s dir --log error \
     DESCRIPTION)
 
 targets = {
-    'bio' : './cmd/bio/main.go',
+    'authentication' : './cmd/authentication/main.go',
     #'influxd' : './cmd/influxd/main.go',
 }
 

@@ -3,7 +3,7 @@ package toml_test
 import (
 	"testing"
 
-	itoml "github.com/fkasper/sitrep-biometrics/toml"
+	itoml "github.com/fkasper/sitrep-authentication/toml"
 )
 
 // Ensure that megabyte sizes can be parsed.

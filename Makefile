@@ -42,17 +42,17 @@ sloccount:
 		 find . -path ./Godeps -prune -o -name "*.go" -print0 | xargs -0 wc -l
 
 install: clean
-		go install github.com/xpandmmi/bio-api
+		go install github.com/xpandmmi/authentication-api
 		cd xctl && $(MAKE) install && cd ..
 
 run: install
-		bio-api -etcd=${ETCD_NODE1} -etcd=${ETCD_NODE2} -etcd=${ETCD_NODE3} -etcdKey=/bio -statsdAddr=localhost:8125 -statsdPrefix=bio -logSeverity=INFO
+		authentication-api -etcd=${ETCD_NODE1} -etcd=${ETCD_NODE2} -etcd=${ETCD_NODE3} -etcdKey=/authentication -statsdAddr=localhost:8125 -statsdPrefix=authentication -logSeverity=INFO
 
 run-fast: install
-		bio-api -etcd=${ETCD_NODE1} -etcd=${ETCD_NODE2} -etcd=${ETCD_NODE3} -etcdKey=/bio
+		authentication-api -etcd=${ETCD_NODE1} -etcd=${ETCD_NODE2} -etcd=${ETCD_NODE3} -etcdKey=/authentication
 
 docker-clean:
-		docker rm -f bio-api
+		docker rm -f authentication-api
 
 build:
 		./build.py

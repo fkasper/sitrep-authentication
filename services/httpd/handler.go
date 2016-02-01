@@ -2,7 +2,6 @@ package httpd
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/pprof"
@@ -10,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/bmizerany/pat"
-	"github.com/fkasper/sitrep-biometrics/models"
+	"github.com/fkasper/sitrep-authentication/schema"
 	"github.com/gocql/gocql"
 	"github.com/mattbaird/elastigo/lib"
 	"github.com/rcrowley/go-metrics"
@@ -92,68 +91,24 @@ func NewHandler(requireAuthentication, loggingEnabled, writeTrace bool) *Handler
 
 	h.SetRoutes([]route{
 		route{
-			"index_bios",
-			"GET", "/profiles/api/bios", true, true, h.indexBiographies,
+			"authentication_login-route",
+			"POST", "/apis/authentication/login", true, true, h.authenticationLoginService,
 		},
 		route{
-			"create_biography",
-			"POST", "/profiles/api/bios", true, true, h.createBiography,
+			"profiles-self",
+			"GET", "/apis/authentication/me", true, true, h.receiveOwnProfileService,
 		},
 		route{
-			"create_biography_opts",
-			"OPTIONS", "/profiles/api/bios", true, true, h.serveOptions,
+			"exercises-self",
+			"GET", "/apis/authentication/exercises", true, true, h.authenticationGetExercisesService,
 		},
 		route{
-			"update_biography_opts",
-			"OPTIONS", "/profiles/api/bio", true, true, h.serveOptions,
+			"change-my-password",
+			"POST", "/apis/authentication/change-password", true, true, h.authenticationPasswordChangeService,
 		},
 		route{
-			"show_bio",
-			"GET", "/profiles/api/bio", true, true, h.showBiography,
-		},
-		route{
-			"show_bio",
-			"DELETE", "/profiles/api/bio", true, true, h.deleteBiography,
-		},
-		route{
-			"update_bio",
-			"PUT", "/profiles/api/bio", true, true, h.updateBiography,
-		},
-		route{
-			"manifest_appcache",
-			"GET", "/profiles/biography/:manifest.appcache", true, true, h.serveAppCache,
-		},
-		route{
-			"manifest_json",
-			"GET", "/profiles/biography/:manifest.json", true, true, h.serveAppJson,
-		},
-		route{
-			"serviceworker_js",
-			"GET", "/profiles/biography/serviceworker/:version.js", true, true, h.serveServiceWorker,
-		},
-		route{
-			"js",
-			"GET", "/profiles/biography/:version.js", true, true, h.serveBundleJs,
-		},
-		route{
-			"css",
-			"GET", "/profiles/biography/:version.css", true, true, h.serveMainCss,
-		},
-		route{
-			"biography",
-			"GET", "/profiles/biography", true, true, h.serveBiographyResult,
-		},
-		route{
-			"biography",
-			"GET", "/profiles/biography/:name", true, true, h.serveBiographyResult,
-		},
-		route{
-			"biography",
-			"GET", "/profiles/biography/:name/:action", true, true, h.serveBiographyResult,
-		},
-		route{
-			"biography",
-			"GET", "/profiles/arcgis/:profile", true, true, h.serveArcGISMap,
+			"authentication_options-route",
+			"OPTIONS", "/apis/authentication/:option", true, false, h.serveOptions,
 		},
 		route{
 			"healthcheck",
@@ -200,15 +155,14 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) SetRoutes(routes []route) {
 	for _, r := range routes {
 		var handler http.Handler
-
 		// If it's a handler func that requires a domain, wrap it in a domain :lol:
 		// if hf, ok := r.handlerFunc.(func(http.ResponseWriter, *http.Request, *models.Domain)); ok {
 		// 	handler = materializeDomain(hf, h)
 		// }
 
 		// If it's a handler func that requires authorization, wrap it in authorization
-		if hf, ok := r.handlerFunc.(func(http.ResponseWriter, *http.Request, *models.Domain, *models.User)); ok {
-			handler = authenticateWithDomain(hf, h, h.requireAuthentication)
+		if hf, ok := r.handlerFunc.(func(http.ResponseWriter, *http.Request, *sitrep.UsersByEmail)); ok {
+			handler = authenticate(hf, h, h.requireAuthentication)
 		}
 		// If it's a handler func that requires authorization, wrap it in authorization
 		// if hf, ok := r.handlerFunc.(func(http.ResponseWriter, *http.Request, *models.User)); ok {
@@ -238,63 +192,6 @@ func (h *Handler) SetRoutes(routes []route) {
 
 func (h *Handler) serveOptions(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
-}
-func (h *Handler) serveServiceWorker(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("content-type", "application/javascript")
-	w.WriteHeader(http.StatusOK)
-	dat, err := ioutil.ReadFile("build/serviceworker.js")
-	if err != nil {
-		httpError(w, "No id given", false, http.StatusNotFound)
-		return
-	}
-	w.Write(dat)
-}
-func (h *Handler) serveBundleJs(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("content-type", "application/javascript")
-	w.WriteHeader(http.StatusOK)
-	dat, err := ioutil.ReadFile("build/assets/javascript/bundle.js")
-	if err != nil {
-		httpError(w, err.Error(), false, http.StatusNotFound)
-		return
-	}
-	w.Write(dat)
-}
-func (h *Handler) serveMainCss(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("content-type", "text/css")
-	w.WriteHeader(http.StatusOK)
-	dat, err := ioutil.ReadFile("build/assets/css/main.css")
-	if err != nil {
-		httpError(w, err.Error(), false, http.StatusNotFound)
-		return
-	}
-	w.Write(dat)
-}
-func (h *Handler) serveAppCache(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("content-type", "text/cache-manifest")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`CACHE MANIFEST
-# ` + h.Version + `
-
-/profiles/biography/` + h.Version + `.json
-/profiles/biography/serviceworker/` + h.Version + `.js
-/profiles/biography/` + h.Version + `.js
-/profiles/biography/` + h.Version + `.css
-/profiles/biography
-
-NETWORK:
-*
-  `))
-}
-func (h *Handler) serveAppJson(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("content-type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{
-    "name": "SITREP Profiles",
-    "start_url": "/profiles/biography",
-    "display": "standalone",
-    "orientation": "portrait",
-    "background_color": "#FFFFFF"
-  }`))
 }
 
 // RootAPIResult describes the API Result of the Root Document
@@ -382,46 +279,4 @@ func (r *Response) Error() error {
 	// 	// }
 	// }
 	return nil
-}
-
-// Helpers
-
-// MarshalEmber wraps a document in an ember package
-func MarshalEmber(w http.ResponseWriter, id gocql.UUID, data interface{}, typeString string, pretty bool) {
-	w.Header().Add("content-type", "application/json")
-	ember := &models.EmberData{
-		Data: models.EmberDataObj{
-			Type:       typeString,
-			ID:         id.String(),
-			Attributes: MarshalJSON(data, pretty),
-		},
-	}
-	w.Write(MarshalJSON(ember, pretty))
-}
-
-// MarshalMultiEmber wraps a document in an ember package
-func MarshalMultiEmber(w http.ResponseWriter, data *models.EmberMultiData, pretty bool) {
-	w.Header().Add("content-type", "application/json")
-	w.Write(MarshalJSON(data, pretty))
-}
-
-// EmberDataObj defines a inner-response object that follows embers standards
-type EmberDataObj struct {
-	Type       string          `json:"type"`
-	ID         string          `json:"id,omitempty"`
-	Attributes json.RawMessage `json:"attributes"`
-}
-
-// EmberData is the wrapper for EmberDataObj.
-type EmberData struct {
-	Data   EmberDataObj `json:"data"`
-	Errors interface{}  `json:"errors,omitempty"`
-	Meta   interface{}  `json:"meta,omitempty"`
-}
-
-// EmberMultiData defines multiple occurrencies of EmberData's Data
-type EmberMultiData struct {
-	Data   interface{} `json:"data"`
-	Errors interface{} `json:"errors,omitempty"`
-	Meta   interface{} `json:"meta,omitempty"`
 }

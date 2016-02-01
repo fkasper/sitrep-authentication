@@ -11,7 +11,7 @@ WORKDIR /app
 COPY build /app/build
 COPY html /app/html
 # Generate a default config
-ADD sample.toml /etc/bio.toml
+ADD sample.toml /etc/authentication.toml
 ADD fargo.gcfg /etc/eureka.gcfg
 
-ENTRYPOINT ["/app/build/bio", "--config", "/etc/bio.toml"]
+ENTRYPOINT ["/app/build/authentication", "--config", "/etc/authentication.toml"]

@@ -9,9 +9,12 @@ import (
 	"strings"
 	"time"
 
-	"code.google.com/p/go-uuid/uuid"
-	"github.com/fkasper/sitrep-biometrics/models"
+	"github.com/fkasper/sitrep-authentication/models"
+	"github.com/fkasper/sitrep-authentication/schema"
 	"github.com/rcrowley/go-metrics"
+
+	"code.google.com/p/go-uuid/uuid"
+	//"github.com/fkasper/sitrep-authentication/models"
 )
 
 // determines if the client can accept compressed responses, and encodes accordingly
@@ -30,10 +33,10 @@ func gzipFilter(inner http.Handler) http.Handler {
 }
 
 // versionHeader takes a HTTP handler and returns a HTTP handler
-// and adds the X-bio-VERSION header to outgoing responses.
+// and adds the X-authentication-VERSION header to outgoing responses.
 func versionHeader(inner http.Handler, h *Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("X-bio-Version", h.Version)
+		w.Header().Add("X-authentication-Version", h.Version)
 		inner.ServeHTTP(w, r)
 	})
 }
@@ -64,7 +67,7 @@ func cors(inner http.Handler) http.Handler {
 
 			w.Header().Set(`Access-Control-Expose-Headers`, strings.Join([]string{
 				`Date`,
-				`X-bio-Version`,
+				`X-authentication-Version`,
 			}, ", "))
 		}
 
@@ -113,50 +116,79 @@ func recovery(inner http.Handler, name string, weblog *log.Logger) http.Handler 
 	})
 }
 
-func authenticateWithDomain(inner func(http.ResponseWriter, *http.Request, *models.Domain, *models.User), h *Handler, requireAuthentication bool) http.Handler {
-	redirectDomain := "/authentication_users/sign_in"
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		materialized := &models.Domain{}
-		domainName, err := parseDomain(r)
-		if err != nil {
-			h.Logger.Fatalln("Domain Err", err.Error())
-			http.Redirect(w, r, redirectDomain, http.StatusTemporaryRedirect)
-		}
-		if err := models.VirtualDomainCheck(h.Mongo, domainName, "irrelevant", materialized); err != nil {
-			h.Logger.Fatalln("Domain Err", err.Error())
-			http.Redirect(w, r, redirectDomain, http.StatusTemporaryRedirect)
-		}
-		var user *models.User
+func makeForbidden(w http.ResponseWriter, r *http.Request) {
+	httpError(w, "You are not allowed to access this resource", false, http.StatusForbidden)
+}
 
-		// Return early if we are not authenticating
+func authenticate(inner func(http.ResponseWriter, *http.Request, *sitrep.UsersByEmail), h *Handler, requireAuthentication bool) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !requireAuthentication {
-			inner(w, r, materialized, user)
+			inner(w, r, nil)
 			return
 		}
-		if requireAuthentication {
-			counter := metrics.GetOrRegisterCounter(statAuthFail, h.statMap)
-			token, err := parseCredentials(r)
-			if err != nil {
-				counter.Inc(1)
-				http.Redirect(w, r, redirectDomain, http.StatusTemporaryRedirect)
-				return
-			}
-			if token == "" {
-				counter.Inc(1)
-				http.Redirect(w, r, redirectDomain, http.StatusTemporaryRedirect)
-				return
-			}
-			user, err := models.ValidateUserForDomain(h.Mongo, r, token)
-			if err != nil {
-				counter.Inc(1)
-				http.Redirect(w, r, redirectDomain, http.StatusTemporaryRedirect)
-				return
-			}
-			inner(w, r, materialized, &user)
+		counter := metrics.GetOrRegisterCounter(statAuthFail, h.statMap)
+		accessToken, err := parseCredentials(r)
+		if err != nil {
+			counter.Inc(1)
+			makeForbidden(w, r)
 			return
 		}
+
+		user, err := models.VerifyUserRequest(h.Cassandra, accessToken)
+		if err != nil {
+			counter.Inc(1)
+			makeForbidden(w, r)
+			return
+		}
+		inner(w, r, user)
 	})
 }
+
+//
+// func authenticateWithDomain(inner func(http.ResponseWriter, *http.Request, *models.Domain, *models.User), h *Handler, requireAuthentication bool) http.Handler {
+// 	redirectDomain := "/authentication_users/sign_in"
+// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 		materialized := &models.Domain{}
+// 		domainName, err := parseDomain(r)
+// 		if err != nil {
+// 			h.Logger.Fatalln("Domain Err", err.Error())
+// 			http.Redirect(w, r, redirectDomain, http.StatusTemporaryRedirect)
+// 		}
+// 		if err := models.VirtualDomainCheck(h.Mongo, domainName, "irrelevant", materialized); err != nil {
+// 			h.Logger.Fatalln("Domain Err", err.Error())
+// 			http.Redirect(w, r, redirectDomain, http.StatusTemporaryRedirect)
+// 		}
+// 		var user *models.User
+//
+// 		// Return early if we are not authenticating
+// 		if !requireAuthentication {
+// 			inner(w, r, materialized, user)
+// 			return
+// 		}
+// 		if requireAuthentication {
+// 			counter := metrics.GetOrRegisterCounter(statAuthFail, h.statMap)
+// 			token, err := parseCredentials(r)
+// 			if err != nil {
+// 				counter.Inc(1)
+// 				http.Redirect(w, r, redirectDomain, http.StatusTemporaryRedirect)
+// 				return
+// 			}
+// 			if token == "" {
+// 				counter.Inc(1)
+// 				http.Redirect(w, r, redirectDomain, http.StatusTemporaryRedirect)
+// 				return
+// 			}
+// 			user, err := models.ValidateUserForDomain(h.Mongo, r, token)
+// 			if err != nil {
+// 				counter.Inc(1)
+// 				http.Redirect(w, r, redirectDomain, http.StatusTemporaryRedirect)
+// 				return
+// 			}
+// 			inner(w, r, materialized, &user)
+// 			return
+// 		}
+// 	})
+// }
 
 func parseDomain(r *http.Request) (string, error) {
 	q := r.URL.Query()
@@ -193,7 +225,7 @@ func parseCredentials(r *http.Request) (string, error) {
 			return u[1], nil
 		}
 	}
-	cookie, err := r.Cookie("SITREP_TOKEN")
+	cookie, err := r.Cookie("sid")
 	if err == nil {
 		return cookie.Value, nil
 	}

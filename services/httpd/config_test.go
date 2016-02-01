@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/BurntSushi/toml"
-	"github.com/fkasper/sitrep-biometrics/services/httpd"
+	"github.com/fkasper/sitrep-authentication/services/httpd"
 )
 
 func TestConfig_Parse(t *testing.T) {

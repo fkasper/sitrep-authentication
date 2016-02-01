@@ -4,7 +4,7 @@ import (
 	"net"
 	"time"
 
-	//"github.com/fkasper/sitrep-biometrics/toml"
+	//"github.com/fkasper/sitrep-authentication/toml"
 )
 
 const (
@@ -32,17 +32,11 @@ const (
 	// DefaultLoggingEnabled determines if log messages are printed for the meta service
 	DefaultLoggingEnabled = true
 
-	//DefaultDatabase = "mongodb://user:pass@server.compose.io/db_name"
-	DefaultDatabase = "mongodb://127.0.0.1:27017/sitrep"
-
-	// DefaultDbName sets the mongodb database name
-	DefaultDbName = "sitrep"
-
 	// DefaultElasticSearchUrl sets the default elasticsearch contact point
 	DefaultElasticSearchUrl = "http://localhost:9200"
 
 	// DefaultInfluxDB defines the DB to use with influxDB
-	DefaultInfluxDB = "bio"
+	DefaultInfluxDB = "authentication"
 
 	// DefaultInfluxHost defines the host to use with influxDB
 	DefaultInfluxHost = "http://127.0.0.1:8086"
@@ -52,8 +46,6 @@ const (
 
 	// DefaultInfluxPass defines the password to use with influxDB
 	DefaultInfluxPass = "test"
-
-	DefaultEnableMontoAuth = false
 )
 
 // Config represents the meta configuration.
@@ -62,10 +54,6 @@ type Config struct {
 	Hostname         string `toml:"hostname"`
 	BindAddress      string `toml:"bind-address"`
 	LoggingEnabled   bool   `toml:"logging-enabled"`
-	MongoUrl         string `toml:"mongo-url"`
-	MongoUser        string `toml:"mongo-user"`
-	MongoPass        string `toml:"mongo-pass"`
-	MongoDbName      string `toml:"mongo-db-name"`
 	ElasticSearchUrl string `toml:"elastic-search-url"`
 	InfluxDB         string `toml:"influx-database"`
 	InfluxHost       string `toml:"influx-hostname"`
@@ -80,16 +68,11 @@ func NewConfig() *Config {
 		Hostname:         DefaultHostname,
 		BindAddress:      getLocalIP(),
 		LoggingEnabled:   DefaultLoggingEnabled,
-		MongoUrl:         DefaultDatabase,
-		MongoDbName:      DefaultDbName,
 		ElasticSearchUrl: DefaultElasticSearchUrl,
 		InfluxDB:         DefaultInfluxDB,
 		InfluxHost:       DefaultInfluxHost,
 		InfluxUser:       DefaultInfluxUser,
 		InfluxPass:       DefaultInfluxPass,
-		MongoUser:        "mongo",
-		MongoPass:        "default",
-		MongoAuthEnabled: DefaultEnableMontoAuth,
 	}
 }
 

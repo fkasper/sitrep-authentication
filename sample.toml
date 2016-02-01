@@ -1,18 +1,14 @@
 [meta]
-  dir = "/Users/f/.bio"
-  hostname = "0.0.0.0"
-  bind-address = ":7717"
+  dir = "/Users/f/.authentication"
+  hostname = "localhost"
+  bind-address = "192.168.10.75"
   logging-enabled = true
-  mongo-url = "mongodb://database-1.c.vatcinc-sitrep.internal:27017/sitrep"
-  mongo-user = "sitrep"
-  mongo-pass = "L5I44dWm"
-  mongo-enable-auth = true
-  mongo-db-name = "sitrep"
-  elastic-search-url = "http://database-1.c.vatcinc-sitrep.internal:9200"
-  influx-database = "bio"
-  influx-hostname = "http://database-1.c.vatcinc-sitrep.internal:8086"
+  elastic-search-url = "http://localhost:9200"
+  influx-database = "authentication"
+  influx-hostname = "http://127.0.0.1:8086"
   influx-username = "test"
   influx-password = "test"
+  mongo-enable-auth = false
 
 [http]
   enabled = true
@@ -22,17 +18,35 @@
   write-tracing = false
   pprof-enabled = false
 
-[eureka]
-  enabled = true
-  app-name = "bios-profilemgmt"
-  config-path = "/etc/eureka.gcfg"
-  vip-address = "profiles-management.cluster.sitrep-vatcinc.com"
-
-[mongo]
-  enabled = false
-  peers = ["database-1.c.vatcinc-sitrep.internal:27017"]
-
 [database]
-  cassandra-keyspace = "sitrep"
+  cassandra-keyspace = "authentication"
   cassandra-num-connections = 5
-  cassandra-peers = ["database-1.c.vatcinc-sitrep.internal"]
+  cassandra-peers = ["127.0.0.1"]
+
+[service]
+  service-port = 7101
+
+[registration]
+  etcd-endpoints = ["http://127.0.0.1:4001"]
+  ttl = "3s"
+  registration-name = "registrator"
+  registration-prefix = "/traefik"
+  loadbalancing-strategy = "drr"
+  route-by-path = true
+  route-paths = ["/"]
+  route-by-method = false
+  route-by-host = false
+  pass-hot-header = true
+  enable-circuitbreaker = true
+  circuitbreaker-expression = "NetworkErrorRatio() > 0.5"
+  discovery-token = "f911d09916d208e77ca624465f508039"
+  discovery-enabled = true
+  discovery-registry = "https://discovery.etcd.io"
+
+[self-heal]
+  healthcheck-endpoint = "/healthcheck"
+  refresh-interval = "10s"
+  enabled = true
+  degrade-on-unavailable = true
+  timeout = "5s"
+  repeat-timeout = 2

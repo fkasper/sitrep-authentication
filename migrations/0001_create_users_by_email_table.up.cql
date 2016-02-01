@@ -1,0 +1,21 @@
+CREATE TABLE users_by_email (
+	email text,
+	access_valid_till timestamp,
+	analytics_user_tracking_token text,
+	encrypted_password text,
+	is_admin boolean,
+	is_analyzed boolean,
+	is_banned boolean,
+	is_confirmed boolean,
+	is_employee boolean,
+	is_expiring boolean,
+	jwt_encryption_key text,
+	last_logged_in timestamp,
+	real_name text,
+	twitter_name text,
+	user_rank text,
+	user_self_description text,
+	user_title text,
+	user_unit text,
+	PRIMARY KEY (email)
+);

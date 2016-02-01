@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-# This is the bio CircleCI test script. Using this script allows total control
+# This is the authentication CircleCI test script. Using this script allows total control
 # the environment in which the build and test is run, and matches the official
-# build process for bio.
+# build process for authentication.
 
 BUILD_DIR=$HOME/sitrep-builds
 GO_VERSION=go1.5
@@ -56,12 +56,12 @@ echo "\$GOPATH: $GOPATH"
 echo "\$CIRCLE_BRANCH: $CIRCLE_BRANCH"
 
 # Move the checked-out source to a better location.
-exit_if_fail mv $HOME/sitrep-biometrics $GOPATH/src/github.com/fkasper
-exit_if_fail cd $GOPATH/src/github.com/fkasper/sitrep-biometrics
+exit_if_fail mv $HOME/sitrep-authentication $GOPATH/src/github.com/fkasper
+exit_if_fail cd $GOPATH/src/github.com/fkasper/sitrep-authentication
 exit_if_fail git branch --set-upstream-to=origin/$CIRCLE_BRANCH $CIRCLE_BRANCH
 
 # Install the code.
-exit_if_fail cd $GOPATH/src/github.com/fkasper/sitrep-biometrics
+exit_if_fail cd $GOPATH/src/github.com/fkasper/sitrep-authentication
 exit_if_fail go get -t -d -v ./...
 exit_if_fail git checkout $CIRCLE_BRANCH # 'go get' switches to master. Who knew? Switch back.
 check_go_fmt

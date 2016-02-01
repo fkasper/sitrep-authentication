@@ -1,6 +1,7 @@
-./bio
-./bio-core
-bio-core
+./authentication
+./authentication-core
+authentication-core
 xctl/xctl
 core
-/build/bio
+/build/authentication
+build/

@@ -1,0 +1,1 @@
+DROP TABLE exercise_permissions_level;

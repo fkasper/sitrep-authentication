@@ -1,0 +1,1 @@
+DROP TABLE exercise_by_identifier_and_email;

@@ -1,0 +1,1 @@
+DROP TABLE settings_by_exercise_identifier;

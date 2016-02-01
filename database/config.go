@@ -1,11 +1,11 @@
 package database
 
-//"github.com/fkasper/sitrep-biometrics/toml"
+//"github.com/fkasper/sitrep-authentication/toml"
 
 const (
 
 	// DefaultCassandraKeyspace sets the keyspace for cassandra
-	DefaultCassandraKeyspace = "bio"
+	DefaultCassandraKeyspace = "authentication"
 
 	// DefaultCassandraConns sets the default connections for cassandra pool
 	DefaultCassandraConns = 5

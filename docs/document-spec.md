@@ -1,4 +1,4 @@
-# Documents inside bio
+# Documents inside authentication
 Terminology: A document is an entity, that consists of an undefined ammount of sub-entities(called components or children).
 
 **Status:** WorkInProgress

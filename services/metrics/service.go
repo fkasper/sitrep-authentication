@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/fkasper/sitrep-biometrics/meta"
+	"github.com/fkasper/sitrep-authentication/meta"
 	"github.com/rcrowley/go-metrics"
 	influxdb "github.com/vrischmann/go-metrics-influxdb"
 )
