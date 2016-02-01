@@ -15,6 +15,9 @@ var ExerciseByIdentifierTable = sitrep.ExerciseByIdentifierTableDef()
 // UsersInExerciseTable is a reference to the users cassandra table
 var UsersInExerciseTable = sitrep.CreateUsersInExerciseTableDef()
 
+// ExercisePermissionsLevelTable is a reference to the users cassandra table
+var ExercisePermissionsLevelTable = sitrep.ExercisePermissionsLevelTableDef()
+
 // ActiveUntil time.Time
 //
 // ExerciseDescription string
@@ -71,6 +74,37 @@ func addUserToExercise(user *sitrep.UsersByEmail, exercise *sitrep.ExerciseByIde
 	}
 }
 
+func addUserPermissionToExercise(user *sitrep.UsersByEmail, exercise *sitrep.ExerciseByIdentifier, admin bool, oc bool, trainee bool) {
+	membership := &sitrep.ExercisePermissionsLevel{
+		UserEmail:          user.Email,
+		ExerciseIdentifier: exercise.Id,
+		IsOc:               oc,
+		IsAdmin:            admin,
+		IsTrainee:          trainee,
+		RoleDescription:    "Demo Role",
+	}
+	session, ctx := mockDb()
+	defer session.Close()
+	err := ctx.Store(ExercisePermissionsLevelTable.Bind(*membership)).Exec(session)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// TESTS
+
+func TestExercise_Find(t *testing.T) {
+	user := mockUser()
+	initUser(user)
+	exercise := mockExercise()
+	initExercise(exercise)
+
+	_, err := models.FindExerciseByID(dbConn(), exercise.Id)
+	if err != nil {
+		t.Fatalf("Exercise was not found in the Database oO?")
+	}
+}
+
 func TestUser_ForExercise(t *testing.T) {
 	user := mockUser()
 	initUser(user)
@@ -84,6 +118,63 @@ func TestUser_ForExercise(t *testing.T) {
 
 	if exMap.Exercises[exercise.Id.String()] != exercise.ExerciseName {
 		t.Fatalf("Invalid Email found")
+	}
+
+}
+
+func TestUser_Exercise_Permission_Selection(t *testing.T) {
+	user := mockUser()
+	initUser(user)
+	exercise := mockExercise()
+	initExercise(exercise)
+	addUserToExercise(user, exercise)
+	addUserPermissionToExercise(user, exercise, true, true, true)
+
+	permissions, err := models.FindExercisePermissionsForUser(dbConn(), user, exercise)
+	if err != nil {
+		t.Fatalf("No permissions were found for user %s", user.RealName)
+	}
+
+	if !permissions.IsAdmin {
+		t.Fatalf("No Admin permissions found, while they were set")
+	}
+
+	if !permissions.IsOc {
+		t.Fatalf("No OC permissions found, while they were set")
+	}
+
+	if !permissions.IsTrainee {
+		t.Fatalf("No Trainee permissions found, while they were set")
+	}
+
+}
+
+func TestUser_Exercise_Empty_User(t *testing.T) {
+	user := mockUser()
+	initUser(user)
+	exercise := mockExercise()
+	initExercise(exercise)
+	addUserToExercise(user, exercise)
+	addUserPermissionToExercise(user, exercise, true, true, true)
+
+	_, err := models.FindExercisePermissionsForUser(dbConn(), nil, exercise)
+	if err == nil {
+		t.Fatalf("Test succeeded, but should fail. No User was supplied")
+	}
+
+}
+
+func TestUser_Exercise_Empty_Exercise(t *testing.T) {
+	user := mockUser()
+	initUser(user)
+	exercise := mockExercise()
+	initExercise(exercise)
+	addUserToExercise(user, exercise)
+	addUserPermissionToExercise(user, exercise, true, true, true)
+
+	_, err := models.FindExercisePermissionsForUser(dbConn(), user, nil)
+	if err == nil {
+		t.Fatalf("Test succeeded, but should fail. No Exercise was supplied")
 	}
 
 }

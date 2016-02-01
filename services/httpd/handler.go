@@ -103,6 +103,10 @@ func NewHandler(requireAuthentication, loggingEnabled, writeTrace bool) *Handler
 			"GET", "/apis/authentication/exercises", true, true, h.authenticationGetExercisesService,
 		},
 		route{
+			"exercises-current-permissions",
+			"GET", "/apis/authentication/exercise-permissions", true, true, h.authenticationGetCurrentExercisePermissions,
+		},
+		route{
 			"change-my-password",
 			"POST", "/apis/authentication/change-password", true, true, h.authenticationPasswordChangeService,
 		},
@@ -163,6 +167,10 @@ func (h *Handler) SetRoutes(routes []route) {
 		// If it's a handler func that requires authorization, wrap it in authorization
 		if hf, ok := r.handlerFunc.(func(http.ResponseWriter, *http.Request, *sitrep.UsersByEmail)); ok {
 			handler = authenticate(hf, h, h.requireAuthentication)
+		}
+
+		if hf, ok := r.handlerFunc.(func(http.ResponseWriter, *http.Request, *sitrep.ExerciseByIdentifier)); ok {
+			handler = exercisify(hf, h)
 		}
 		// If it's a handler func that requires authorization, wrap it in authorization
 		// if hf, ok := r.handlerFunc.(func(http.ResponseWriter, *http.Request, *models.User)); ok {

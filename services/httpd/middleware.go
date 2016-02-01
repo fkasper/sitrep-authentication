@@ -11,6 +11,7 @@ import (
 
 	"github.com/fkasper/sitrep-authentication/models"
 	"github.com/fkasper/sitrep-authentication/schema"
+	"github.com/gocql/gocql"
 	"github.com/rcrowley/go-metrics"
 
 	"code.google.com/p/go-uuid/uuid"
@@ -144,51 +145,29 @@ func authenticate(inner func(http.ResponseWriter, *http.Request, *sitrep.UsersBy
 	})
 }
 
-//
-// func authenticateWithDomain(inner func(http.ResponseWriter, *http.Request, *models.Domain, *models.User), h *Handler, requireAuthentication bool) http.Handler {
-// 	redirectDomain := "/authentication_users/sign_in"
-// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 		materialized := &models.Domain{}
-// 		domainName, err := parseDomain(r)
-// 		if err != nil {
-// 			h.Logger.Fatalln("Domain Err", err.Error())
-// 			http.Redirect(w, r, redirectDomain, http.StatusTemporaryRedirect)
-// 		}
-// 		if err := models.VirtualDomainCheck(h.Mongo, domainName, "irrelevant", materialized); err != nil {
-// 			h.Logger.Fatalln("Domain Err", err.Error())
-// 			http.Redirect(w, r, redirectDomain, http.StatusTemporaryRedirect)
-// 		}
-// 		var user *models.User
-//
-// 		// Return early if we are not authenticating
-// 		if !requireAuthentication {
-// 			inner(w, r, materialized, user)
-// 			return
-// 		}
-// 		if requireAuthentication {
-// 			counter := metrics.GetOrRegisterCounter(statAuthFail, h.statMap)
-// 			token, err := parseCredentials(r)
-// 			if err != nil {
-// 				counter.Inc(1)
-// 				http.Redirect(w, r, redirectDomain, http.StatusTemporaryRedirect)
-// 				return
-// 			}
-// 			if token == "" {
-// 				counter.Inc(1)
-// 				http.Redirect(w, r, redirectDomain, http.StatusTemporaryRedirect)
-// 				return
-// 			}
-// 			user, err := models.ValidateUserForDomain(h.Mongo, r, token)
-// 			if err != nil {
-// 				counter.Inc(1)
-// 				http.Redirect(w, r, redirectDomain, http.StatusTemporaryRedirect)
-// 				return
-// 			}
-// 			inner(w, r, materialized, &user)
-// 			return
-// 		}
-// 	})
-// }
+func exercisify(inner func(http.ResponseWriter, *http.Request, *sitrep.ExerciseByIdentifier), h *Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		exerciseIDRaw, err := parseExerciseID(r)
+		if err != nil {
+			makeForbidden(w, r)
+			return
+		}
+
+		exerciseID, err := gocql.ParseUUID(exerciseIDRaw)
+		if err != nil {
+			makeForbidden(w, r)
+			return
+		}
+
+		exercise, err := models.FindExerciseByID(h.Cassandra, exerciseID)
+		if err != nil {
+			makeForbidden(w, r)
+			return
+		}
+		inner(w, r, exercise)
+	})
+}
 
 func parseDomain(r *http.Request) (string, error) {
 	q := r.URL.Query()
@@ -231,6 +210,27 @@ func parseCredentials(r *http.Request) (string, error) {
 	}
 
 	return "", fmt.Errorf("unable to parse Bearer Auth credentials")
+}
+
+// parseExerciseID returns the exercise currently supplied, can be:
+// COOKIE: ex_id (string)
+// GET: ex_id (string)
+// HEADER: X-EXERCISE-ID (string)
+func parseExerciseID(r *http.Request) (string, error) {
+	q := r.URL.Query()
+
+	if u := q.Get("ex_id"); u != "" {
+		return u, nil
+	}
+	if len(r.Header["X-EXERCISE-ID"]) > 0 {
+		return r.Header["X-EXERCISE-ID"][0], nil
+	}
+	cookie, err := r.Cookie("ex_id")
+	if err == nil {
+		return cookie.Value, nil
+	}
+
+	return "", fmt.Errorf("unable to parse Exercise ID")
 }
 
 type gzipResponseWriter struct {

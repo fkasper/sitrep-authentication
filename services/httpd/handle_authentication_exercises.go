@@ -17,24 +17,12 @@ func (h *Handler) authenticationGetExercisesService(w http.ResponseWriter, r *ht
 	w.Write(MarshalJSON(exercises, false))
 }
 
-func (h *Handler) authenticationGetCurrentExercisePermissions(w http.ResponseWriter, r *http.Request, u *sitrep.UsersByEmail) {
-	ex, err := getExerciseFromRequest(r)
-	exercises, err := models.FindExercisePermissionsForUser(h.Cassandra, u, ex)
+func (h *Handler) authenticationGetCurrentExercisePermissions(w http.ResponseWriter, r *http.Request, u *sitrep.UsersByEmail, exercise *sitrep.ExerciseByIdentifier) {
+	exercises, err := models.FindExercisePermissionsForUser(h.Cassandra, u, exercise)
 	if err != nil {
-		httpError(w, "Failed to fetch exercises", false, http.StatusInternalServerError)
+		httpError(w, "User is not authorized in this exercise at all!", false, http.StatusUnauthorized)
 		return
 	}
 	w.Header().Add("content-type", "application/json")
 	w.Write(MarshalJSON(exercises, false))
-}
-
-// Access levels:
-// - SuperAdmin
-// - SysAdmin
-// - Employee
-// - Trainer
-// - Trainee
-// - RolePlayer
-func getExerciseFromRequest(r *http.Request) (*sitrep.ExerciseByIdentifier, error) {
-	return nil, nil
 }
