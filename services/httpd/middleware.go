@@ -13,8 +13,6 @@ import (
 	"github.com/fkasper/sitrep-authentication/schema"
 	"github.com/gocql/gocql"
 	"github.com/rcrowley/go-metrics"
-
-	"code.google.com/p/go-uuid/uuid"
 	//"github.com/fkasper/sitrep-authentication/models"
 )
 
@@ -83,7 +81,10 @@ func cors(inner http.Handler) http.Handler {
 func requestID(inner http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//uid := uuid.TimeUUID()
-		r.Header.Set("Request-Id", uuid.NewUUID().String())
+		uuid, err := gocql.RandomUUID()
+		if err == nil {
+			r.Header.Set("Request-Id", uuid.String())
+		}
 		w.Header().Set("Request-Id", r.Header.Get("Request-Id"))
 
 		inner.ServeHTTP(w, r)
