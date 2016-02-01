@@ -66,6 +66,8 @@ exit_if_fail go get -t -d -v ./...
 exit_if_fail git checkout $CIRCLE_BRANCH # 'go get' switches to master. Who knew? Switch back.
 check_go_fmt
 check_go_vet
+cqlsh -e "CREATE KEYSPACE sitrep WITH replication = {'class' : 'SimpleStrategy','replication_factor' : 1};"
+migrate -url cassandra://127.0.0.1:9042/sitrep -path ./migrations up
 #exit_if_fail go build -v ./...
 exit_if_fail ./build.py
 
