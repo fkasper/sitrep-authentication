@@ -114,6 +114,20 @@ func UserChangePassword(cassandra *gocql.ClusterConfig, user *sitrep.UsersByEmai
 	return &map[string]string{"status": "changed"}, nil
 }
 
+// FetchAllUsers retreives all SAFE fields for users
+func FetchAllUsers(cassandra *gocql.ClusterConfig) ([]sitrep.UsersSafeReturn, error) {
+	session, ctx, _ := WithSession(cassandra)
+	var val []sitrep.UsersSafeReturn
+	defer session.Close()
+	iter, err := ctx.Select().
+		From(UsersTable).
+		Fetch(session)
+	if err != nil {
+		return val, err
+	}
+	return sitrep.MapUsersToSafe(iter)
+}
+
 // UserInvalidError holds the error, when a user has no permission to access an exercise
 type UserInvalidError struct {
 	Message string

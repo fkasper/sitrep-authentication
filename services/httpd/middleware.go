@@ -146,9 +146,8 @@ func authenticate(inner func(http.ResponseWriter, *http.Request, *sitrep.UsersBy
 	})
 }
 
-func exercisify(inner func(http.ResponseWriter, *http.Request, *sitrep.ExerciseByIdentifier), h *Handler) http.Handler {
+func exercisify(inner func(http.ResponseWriter, *http.Request, *sitrep.UsersByEmail, *sitrep.ExerciseByIdentifier), h *Handler, requireAuthentication bool) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
 		exerciseIDRaw, err := parseExerciseID(r)
 		if err != nil {
 			makeForbidden(w, r)
@@ -166,7 +165,25 @@ func exercisify(inner func(http.ResponseWriter, *http.Request, *sitrep.ExerciseB
 			makeForbidden(w, r)
 			return
 		}
-		inner(w, r, exercise)
+		if !requireAuthentication {
+			inner(w, r, nil, exercise)
+			return
+		}
+		counter := metrics.GetOrRegisterCounter(statAuthFail, h.statMap)
+		accessToken, err := parseCredentials(r)
+		if err != nil {
+			counter.Inc(1)
+			makeForbidden(w, r)
+			return
+		}
+
+		user, err := models.VerifyUserRequest(h.Cassandra, accessToken)
+		if err != nil {
+			counter.Inc(1)
+			makeForbidden(w, r)
+			return
+		}
+		inner(w, r, user, exercise)
 	})
 }
 

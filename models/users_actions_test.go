@@ -187,3 +187,18 @@ func TestUser_Change_Passwd_In_ValidCurrent(t *testing.T) {
 	}
 
 }
+func TestUser_FetchAll(t *testing.T) {
+	//UserChangePassword
+	initUser(nil)
+	c := dbConn()
+	users, err := models.FetchAllUsers(c)
+	if err != nil {
+		t.Fatalf("fetch failed unexpectedly")
+		return
+	}
+
+	if len(users) < 1 {
+		t.Fatalf("could not fetch users. lol")
+		return
+	}
+}
