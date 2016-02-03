@@ -3,6 +3,7 @@ package models
 import (
 	"github.com/fkasper/sitrep-authentication/schema"
 	"github.com/gocql/gocql"
+	"github.com/imdario/mergo"
 )
 
 // ExerciseByIdentifierTable is a reference to the users cassandra table
@@ -13,6 +14,9 @@ var UsersInExerciseTable = sitrep.CreateUsersInExerciseTableDef()
 
 // ExercisePermissionsLevelTable is a reference to the users cassandra table
 var ExercisePermissionsLevelTable = sitrep.ExercisePermissionsLevelTableDef()
+
+// SettingsByExerciseIdentifierTable is a reference to the SettingsByExerciseIdentifier cassandra table
+var SettingsByExerciseIdentifierTable = sitrep.SettingsByExerciseIdentifierTableDef()
 
 // FindExerciseByID receives an exercise from the database
 func FindExerciseByID(cassandra *gocql.ClusterConfig, id gocql.UUID) (*sitrep.ExerciseByIdentifier, error) {
@@ -81,4 +85,73 @@ func FindExercisePermissionsForUser(cassandra *gocql.ClusterConfig, user *sitrep
 		return nil, err
 	}
 	return &permissionsMap, nil
+}
+
+// FindOrInitSettingsForExercise searches for settings inside cassandra, or
+// otherwise inits them
+func FindOrInitSettingsForExercise(cassandra *gocql.ClusterConfig, exerciseID gocql.UUID) (map[string]string, error) {
+	session, ctx, _ := WithSession(cassandra)
+	defer session.Close()
+	var eMap map[string]string
+	var settings sitrep.SettingsByExerciseIdentifier
+
+	_, err := ctx.Select().
+		From(SettingsByExerciseIdentifierTable).
+		Where(
+		SettingsByExerciseIdentifierTable.ID.Eq(exerciseID)).
+		Into(
+		SettingsByExerciseIdentifierTable.To(&settings)).
+		FetchOne(session)
+
+	if err != nil {
+		return eMap, nil
+	}
+	if len(settings.Settings) > 1 {
+		return settings.Settings, nil
+	}
+
+	defaultSettings := map[string]string{
+		"backgroundColorMenuBar": "#ccc",
+		"fontColorMenuBar":       "#555",
+		"newsStationEnabled":     "true",
+		"twitterEnabled":         "true",
+		"facebookEnabled":        "false",
+		"youtubeEnabled":         "false",
+		"usaidEnabled":           "false",
+		"dosEnabled":             "true",
+		"contactEnabled":         "true",
+		"contactDestination":     "sitrep@vatcinc.com",
+		"arcgisMainMapLink":      "",
+		"arcgisEmbed":            "true",
+	}
+	if err := ctx.Upsert(SettingsByExerciseIdentifierTable).
+		SetStringStringMap(SettingsByExerciseIdentifierTable.SETTINGS, defaultSettings).
+		Where(
+		SettingsByExerciseIdentifierTable.ID.Eq(exerciseID)).
+		Exec(session); err != nil {
+		return eMap, err
+	}
+	return defaultSettings, nil
+}
+
+// UpdateExerciseSetting updates a single setting key and value
+func UpdateExerciseSetting(cassandra *gocql.ClusterConfig, exerciseID gocql.UUID, settings map[string]string) (map[string]string, error) {
+	session, ctx, _ := WithSession(cassandra)
+	defer session.Close()
+	ex, err := FindOrInitSettingsForExercise(cassandra, exerciseID)
+	if err != nil {
+		return ex, err
+	}
+	if err := mergo.Merge(&settings, ex); err != nil {
+		return ex, err
+	}
+	if err := ctx.Upsert(SettingsByExerciseIdentifierTable).
+		SetStringStringMap(SettingsByExerciseIdentifierTable.SETTINGS, settings).
+		Where(
+		SettingsByExerciseIdentifierTable.ID.Eq(exerciseID)).
+		Exec(session); err != nil {
+		return ex, err
+	}
+	return settings, nil
+
 }

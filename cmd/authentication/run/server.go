@@ -17,7 +17,6 @@ import (
 	elastigo "github.com/mattbaird/elastigo/lib"
 	regmeta "github.com/xpandmmi/registrator/meta"
 	"github.com/xpandmmi/registrator/services/registration"
-	"github.com/xpandmmi/registrator/services/selfheal"
 )
 
 // BuildInfo represents the build details for the server code.
@@ -92,22 +91,11 @@ func NewServer(c *Config, buildInfo *BuildInfo) (*Server, error) {
 	s.appendMetricsReportingService(c.Meta)
 	s.appendHTTPDService(c.HTTPD)
 	s.appendRegistrationService(c.Registration, c.RegMeta)
-	s.appendSelfHealingService(c.Selfheal, c.RegMeta)
 	return s, nil
 }
 
 func (s *Server) appendRegistrationService(c registration.Config, meta *regmeta.Config) {
-	srv := registration.NewService(c, meta)
-	srv.Up = s.up
-	s.Services = append(s.Services, srv)
-}
-
-func (s *Server) appendSelfHealingService(c selfheal.Config, meta *regmeta.Config) {
-	if !c.Enabled {
-		s.up <- true
-		return
-	}
-	srv := selfheal.NewService(c, meta)
+	srv := registration.NewService(c, meta, false)
 	srv.Up = s.up
 	s.Services = append(s.Services, srv)
 }
@@ -144,6 +132,7 @@ func (s *Server) Open() error {
 			}
 			go s.monitorErrorChan(service.Err())
 		}
+		s.up <- true
 
 		return nil
 

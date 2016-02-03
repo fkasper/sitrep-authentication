@@ -1,27 +1,24 @@
 [meta]
   dir = "/Users/f/.authentication"
-  hostname = "localhost"
-  bind-address = "192.168.10.75"
   logging-enabled = true
-  elastic-search-url = "http://localhost:9200"
+  elastic-search-url = "http://database-1.c.vatcinc-sitrep.internal:9200"
   influx-database = "authentication"
-  influx-hostname = "http://127.0.0.1:8086"
+  influx-hostname = "http://database-1.c.vatcinc-sitrep.internal:8086"
   influx-username = "test"
   influx-password = "test"
-  mongo-enable-auth = false
 
 [http]
   enabled = true
   bind-address = ":7717"
-  auth-enabled = false
+  auth-enabled = true
   log-enabled = true
   write-tracing = false
   pprof-enabled = false
 
 [database]
-  cassandra-keyspace = "authentication"
-  cassandra-num-connections = 5
-  cassandra-peers = ["127.0.0.1"]
+  cassandra-keyspace = "sitrep"
+  cassandra-num-connections = 10
+  cassandra-peers = ["database-1.c.vatcinc-sitrep.internal"]
 
 [service]
   service-port = 7101
@@ -30,23 +27,18 @@
   etcd-endpoints = ["http://127.0.0.1:4001"]
   ttl = "3s"
   registration-name = "registrator"
-  registration-prefix = "/traefik"
+  registration-prefix = "/proxy"
   loadbalancing-strategy = "drr"
   route-by-path = true
-  route-paths = ["/"]
+  route-paths = ["/apis/authentication/{service}"]
   route-by-method = false
   route-by-host = false
   pass-hot-header = true
   enable-circuitbreaker = true
   circuitbreaker-expression = "NetworkErrorRatio() > 0.5"
-  discovery-token = "f911d09916d208e77ca624465f508039"
+  discovery-token = "38314c7af778a817844dccb26b7a9c4d"
   discovery-enabled = true
   discovery-registry = "https://discovery.etcd.io"
 
 [self-heal]
-  healthcheck-endpoint = "/healthcheck"
-  refresh-interval = "10s"
-  enabled = true
-  degrade-on-unavailable = true
-  timeout = "5s"
-  repeat-timeout = 2
+  enabled = false # google takes care of this!

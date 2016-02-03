@@ -122,7 +122,7 @@ func TestUser_ForExercise(t *testing.T) {
 
 }
 
-func TestUser_Exercise_Permission_Selection(t *testing.T) {
+func Test_Exercise_Permission_Selection(t *testing.T) {
 	user := mockUser()
 	initUser(user)
 	exercise := mockExercise()
@@ -149,7 +149,7 @@ func TestUser_Exercise_Permission_Selection(t *testing.T) {
 
 }
 
-func TestUser_Exercise_Empty_User(t *testing.T) {
+func Test_Exercise_Empty_User(t *testing.T) {
 	user := mockUser()
 	initUser(user)
 	exercise := mockExercise()
@@ -164,7 +164,7 @@ func TestUser_Exercise_Empty_User(t *testing.T) {
 
 }
 
-func TestUser_Exercise_Empty_Exercise(t *testing.T) {
+func Test_Exercise_Empty_Exercise(t *testing.T) {
 	user := mockUser()
 	initUser(user)
 	exercise := mockExercise()
@@ -175,6 +175,75 @@ func TestUser_Exercise_Empty_Exercise(t *testing.T) {
 	_, err := models.FindExercisePermissionsForUser(dbConn(), user, nil)
 	if err == nil {
 		t.Fatalf("Test succeeded, but should fail. No Exercise was supplied")
+	}
+
+}
+func Test_Exercise_Settings_Init(t *testing.T) {
+	user := mockUser()
+	initUser(user)
+	exercise := mockExercise()
+	initExercise(exercise)
+
+	_, err := models.FindOrInitSettingsForExercise(dbConn(), exercise.Id)
+	if err != nil {
+		t.Fatalf("Settings fetch failed")
+	}
+
+}
+
+func Test_Exercise_Settings_Successful(t *testing.T) {
+	user := mockUser()
+	initUser(user)
+	exercise := mockExercise()
+	initExercise(exercise)
+
+	settings, err := models.FindOrInitSettingsForExercise(dbConn(), exercise.Id)
+	if err != nil {
+		t.Fatalf("Settings fetch failed")
+	}
+
+	if settings["backgroundColorMenuBar"] != "#ccc" {
+		t.Fatalf("Settings check failed! %v", settings)
+	}
+
+}
+
+//
+func Test_Exercise_Settings_Update(t *testing.T) {
+	user := mockUser()
+	initUser(user)
+	exercise := mockExercise()
+	initExercise(exercise)
+	defaultSettings := map[string]string{
+		"backgroundColorMenuBar": "#ccc",
+		"fontColorMenuBar":       "#555",
+		"newsStationEnabled":     "true",
+		"twitterEnabled":         "true",
+		"facebookEnabled":        "false",
+		"youtubeEnabled":         "false",
+		"usaidEnabled":           "false",
+		"dosEnabled":             "true",
+		"contactEnabled":         "true",
+		"contactDestination":     "sitrep@vatcinc.com",
+		"arcgisMainMapLink":      "",
+		"arcgisEmbed":            "true",
+		"key":                    "value",
+	}
+	settings, err := models.UpdateExerciseSetting(dbConn(), exercise.Id, defaultSettings)
+	if err != nil {
+		t.Fatalf("Settings update failed")
+	}
+
+	if settings["key"] != "value" {
+		t.Fatalf("Settings check failed! %v", settings)
+	}
+
+	settings2, err := models.FindOrInitSettingsForExercise(dbConn(), exercise.Id)
+	if err != nil {
+		t.Fatalf("Settings fetch failed")
+	}
+	if settings2["key"] != "value" {
+		t.Fatalf("Settings check failed! %v", settings2)
 	}
 
 }

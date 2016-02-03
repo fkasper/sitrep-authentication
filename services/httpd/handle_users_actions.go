@@ -13,7 +13,7 @@ func (h *Handler) getUsersList(w http.ResponseWriter, r *http.Request, u *sitrep
 		httpError(w, "User is not authorized in this exercise at all!", false, http.StatusUnauthorized)
 		return
 	}
-	if !exercises.IsAdmin && !u.IsAdmin {
+	if !exercises.IsAdmin || !u.IsAdmin {
 		httpError(w, "User is authorized to fetch a list of users", false, http.StatusUnauthorized)
 		return
 	}

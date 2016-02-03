@@ -60,6 +60,7 @@ func cors(inner http.Handler) http.Handler {
 				`Authorization`,
 				`Content-Length`,
 				`Content-Type`,
+				`X-EXERCISE-ID`,
 				`X-CSRF-Token`,
 				`X-HTTP-Method-Override`,
 			}, ", "))
@@ -118,8 +119,8 @@ func recovery(inner http.Handler, name string, weblog *log.Logger) http.Handler 
 	})
 }
 
-func makeForbidden(w http.ResponseWriter, r *http.Request) {
-	httpError(w, "You are not allowed to access this resource", false, http.StatusForbidden)
+func makeForbidden(w http.ResponseWriter, err error) {
+	httpError(w, fmt.Sprintf("You are not allowed to access this resource: %s", err.Error()), false, http.StatusForbidden)
 }
 
 func authenticate(inner func(http.ResponseWriter, *http.Request, *sitrep.UsersByEmail), h *Handler, requireAuthentication bool) http.Handler {
@@ -132,17 +133,40 @@ func authenticate(inner func(http.ResponseWriter, *http.Request, *sitrep.UsersBy
 		accessToken, err := parseCredentials(r)
 		if err != nil {
 			counter.Inc(1)
-			makeForbidden(w, r)
+			makeForbidden(w, err)
 			return
 		}
 
 		user, err := models.VerifyUserRequest(h.Cassandra, accessToken)
 		if err != nil {
 			counter.Inc(1)
-			makeForbidden(w, r)
+			makeForbidden(w, err)
 			return
 		}
 		inner(w, r, user)
+	})
+}
+
+func exercisifyOnly(inner func(http.ResponseWriter, *http.Request, *sitrep.ExerciseByIdentifier), h *Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		exerciseIDRaw, err := parseExerciseID(r)
+		if err != nil {
+			makeForbidden(w, err)
+			return
+		}
+
+		exerciseID, err := gocql.ParseUUID(exerciseIDRaw)
+		if err != nil {
+			makeForbidden(w, err)
+			return
+		}
+
+		exercise, err := models.FindExerciseByID(h.Cassandra, exerciseID)
+		if err != nil {
+			makeForbidden(w, err)
+			return
+		}
+		inner(w, r, exercise)
 	})
 }
 
@@ -150,19 +174,19 @@ func exercisify(inner func(http.ResponseWriter, *http.Request, *sitrep.UsersByEm
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		exerciseIDRaw, err := parseExerciseID(r)
 		if err != nil {
-			makeForbidden(w, r)
+			makeForbidden(w, err)
 			return
 		}
 
 		exerciseID, err := gocql.ParseUUID(exerciseIDRaw)
 		if err != nil {
-			makeForbidden(w, r)
+			makeForbidden(w, err)
 			return
 		}
 
 		exercise, err := models.FindExerciseByID(h.Cassandra, exerciseID)
 		if err != nil {
-			makeForbidden(w, r)
+			makeForbidden(w, err)
 			return
 		}
 		if !requireAuthentication {
@@ -173,14 +197,14 @@ func exercisify(inner func(http.ResponseWriter, *http.Request, *sitrep.UsersByEm
 		accessToken, err := parseCredentials(r)
 		if err != nil {
 			counter.Inc(1)
-			makeForbidden(w, r)
+			makeForbidden(w, err)
 			return
 		}
 
 		user, err := models.VerifyUserRequest(h.Cassandra, accessToken)
 		if err != nil {
 			counter.Inc(1)
-			makeForbidden(w, r)
+			makeForbidden(w, err)
 			return
 		}
 		inner(w, r, user, exercise)
@@ -240,8 +264,8 @@ func parseExerciseID(r *http.Request) (string, error) {
 	if u := q.Get("ex_id"); u != "" {
 		return u, nil
 	}
-	if len(r.Header["X-EXERCISE-ID"]) > 0 {
-		return r.Header["X-EXERCISE-ID"][0], nil
+	if len(r.Header["X-Exercise-Id"]) > 0 {
+		return r.Header["X-Exercise-Id"][0], nil
 	}
 	cookie, err := r.Cookie("ex_id")
 	if err == nil {
